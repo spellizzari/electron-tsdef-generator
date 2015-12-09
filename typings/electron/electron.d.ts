@@ -57,7 +57,7 @@ declare module 'electron' {
 		/** Emitted when failed to verify the `certificate` for `url`, to trust the certificate you should prevent the default behavior with `event. */
 		on(event: 'certificate-error', listener: (event: Event, webContents: WebContents, url: URL, error: string, certificate: { data: Buffer; issuerName: string; }, callback: (value: boolean) => void) => void): NodeJS.EventEmitter;
 		/** Emitted when a client certificate is requested. */
-		on(event: 'select-client-certificate', listener: (event: Event, webContents: WebContents, url: URL, certificateList: { data: Buffer; issuerName: string; }[], callback: (value: any) => void) => void): NodeJS.EventEmitter;
+		on(event: 'select-client-certificate', listener: (event: Event, webContents: WebContents, url: URL, certificateList: Objects, callback: (value: any) => void) => void): NodeJS.EventEmitter;
 		/** Emitted when `webContents` wants to do basic auth. */
 		on(event: 'login', listener: (event: Event, webContents: WebContents, request: { method: string; url: URL; referrer: URL; }, authInfo: { isProxy: Boolean; scheme: string; host: string; port: number; realm: string; }, callback: (username: string, secret: string) => void) => void): NodeJS.EventEmitter;
 		/** Emitted when the gpu process crashes. */
@@ -166,11 +166,6 @@ declare module 'electron' {
 
 	/** The `BrowserWindow` class gives you the ability to create a browser window. */
 	class BrowserWindow extends NodeJS.EventEmitter {
-		//
-		// Constructors
-		//
-		/** Builds a new instance of the BrowserWindow class. */
-		constructor(options?: { width: number; height: number; x: number; y: number; useContentSize: Boolean; center: Boolean; minWidth: number; minHeight: number; maxWidth: number; maxHeight: number; resizable: Boolean; alwaysOnTop: Boolean; fullscreen: Boolean; skipTaskbar: Boolean; kiosk: Boolean; title: string; icon: NativeImage; show: Boolean; frame: Boolean; acceptFirstMouse: Boolean; disableAutoHideCursor: Boolean; autoHideMenuBar: Boolean; enableLargerThanScreen: Boolean; backgroundColor: string; darkTheme: Boolean; transparent: Boolean; type: string; titleBarStyle: string; webPreferences: { nodeIntegration: Boolean; preload: string; partition: string; zoomFactor: Number; javascript: Boolean; webSecurity: Boolean; allowDisplayingInsecureContent: Boolean; allowRunningInsecureContent: Boolean; images: Boolean; java: Boolean; textAreasAreResizable: Boolean; webgl: Boolean; webaudio: Boolean; plugins: Boolean; experimentalFeatures: Boolean; experimentalCanvasFeatures: Boolean; overlayScrollbars: Boolean; overlayFullscreenVideo: Boolean; sharedWorker: Boolean; directWrite: Boolean; pageVisibility: Boolean; }; });
 		//
 		// Properties
 		//
@@ -492,7 +487,7 @@ declare module 'electron' {
 		/** Returns a `String` represents the mime type. */
 		getMimeType(): string;
 		/** Returns a `Boolean` indicates whether the download has user gesture. */
-		hasUserGesture(): boolean;
+		hasUserGesture(): Boolean;
 		/** Returns a `String` represents the file name of the download item. */
 		getFilename(): string;
 		/** Returns a `Integer` represents the total size in bytes of the download item. */
@@ -529,7 +524,7 @@ declare module 'electron' {
 		//
 		/** When the event occurs the `callback` is called with an `event` object and a message, `arg`. */
 		/** @param channel - The event name. */
-		static on(channel: string, callback: (event: { returnValue: any; sender: WebContents; }) => void): void;
+		on(channel: string, callback: (event: { returnValue: any; sender: WebContents; }) => void): void;
 	}
 
 	// Code generated from https://github.com/atom/electron/blob/v0.35.4/docs/api/ipc-renderer.md
@@ -541,16 +536,511 @@ declare module 'electron' {
 		//
 		/** When the event occurs the `callback` is called with an `event` object and arbitrary arguments. */
 		/** @param channel - The event name. */
-		static on(channel: string, callback: (event: any) => void): void;
+		on(channel: string, callback: (event: any) => void): void;
 		/** Send an event to the main process asynchronously via a `channel`, you can also send arbitrary arguments. */
 		/** @param channel - The event name. */
-		static send(channel: string, ...arg: any[]): void;
+		send(channel: string, ...arg: any[]): void;
 		/** Send an event to the main process synchronously via a `channel`, you can also send arbitrary arguments. */
 		/** @param channel - The event name. */
-		static sendSync(channel: string, ...arg: any[]): void;
+		sendSync(channel: string, ...arg: any[]): void;
 		/** Like `ipcRenderer. */
 		/** @param channel - The event name. */
-		static sendToHost(channel: string, ...arg: any[]): void;
+		sendToHost(channel: string, ...arg: any[]): void;
+	}
+
+	// Code generated from https://github.com/atom/electron/blob/v0.35.4/docs/api/menu-item.md
+
+	/** The `menu-item` module allows you to add items to an application or context [`menu`](menu. */
+	class MenuItem extends NodeJS.EventEmitter {
+	}
+
+	// Code generated from https://github.com/atom/electron/blob/v0.35.4/docs/api/menu.md
+
+	/** The `menu` class is used to create native menus that can be used as application menus and [context menus](https://developer. */
+	class Menu extends NodeJS.EventEmitter {
+		//
+		// Methods
+		//
+		/** Sets `menu` as the application menu on OS X. */
+		static setApplicationMenu(menu: Menu): void;
+		/** (OS X) Sends the `action` to the first responder of application. */
+		static sendActionToFirstResponder(action: string): void;
+		/** Generally, the `template` is just an array of `options` for constructing a [MenuItem](menu-item. */
+		static buildFromTemplate(template: Array): void;
+		/** Pops up this menu as a context menu in the `browserWindow`. */
+		static popup(browserWindow?: BrowserWindow, x?: Number, y?: Number): void;
+		/** Appends the `menuItem` to the menu. */
+		static append(menuItem: MenuItem): void;
+		/** Inserts the `menuItem` to the `pos` position of the menu. */
+		static insert(pos: number, menuItem: MenuItem): void;
+		/** Get an array containing the menu's items. */
+		static items(): MenuItem[];
+	}
+
+	// Code generated from https://github.com/atom/electron/blob/v0.35.4/docs/api/native-image.md
+
+	/** In Electron, for the APIs that take images, you can pass either file paths or `nativeImage` instances. */
+	class NativeImage extends NodeJS.EventEmitter {
+		//
+		// Methods
+		//
+		/** Returns a [Buffer][buffer] that contains the image's `PNG` encoded data. */
+		toPng(): Buffer;
+		/** Returns a [Buffer][buffer] that contains the image's `JPEG` encoded data. */
+		/** @param quality - 100 (**required**) */
+		toJpeg(quality: number): Buffer;
+		/** Returns the data URL of the image. */
+		toDataURL(): string;
+		/** Returns a boolean whether the image is empty. */
+		isEmpty(): boolean;
+		/** Returns the size of the image. */
+		getSize(): number[];
+		/** Marks the image as template image. */
+		setTemplateImage(option: Boolean): void;
+		/** Returns a boolean whether the image is a template image. */
+		isTemplateImage(): boolean;
+		/** Creates an empty `nativeImage` instance. */
+		static createEmpty(): NativeImage;
+		/** Creates a new `nativeImage` instance from a file located at `path`. */
+		static createFromPath(path: string): NativeImage;
+		/** Creates a new `nativeImage` instance from `buffer`. */
+		static createFromBuffer(buffer: Buffer, scaleFactor?: Double): NativeImage;
+		/** Creates a new `nativeImage` instance from `dataURL`. */
+		static createFromDataURL(dataURL: string): NativeImage;
+	}
+
+	// Code generated from https://github.com/atom/electron/blob/v0.35.4/docs/api/power-monitor.md
+
+	/** The `power-monitor` module is used to monitor power state changes. */
+	interface PowerMonitorModule extends NodeJS.EventEmitter {
+		//
+		// Events
+		//
+		on(event: string, listener: Function): NodeJS.EventEmitter;
+		/** Emitted when the system is suspending. */
+		on(event: 'suspend', listener: Function): NodeJS.EventEmitter;
+		/** Emitted when system is resuming. */
+		on(event: 'resume', listener: Function): NodeJS.EventEmitter;
+		/** Emitted when the system changes to AC power. */
+		on(event: 'on-ac', listener: Function): NodeJS.EventEmitter;
+		/** Emitted when system changes to battery power. */
+		on(event: 'on-battery', listener: Function): NodeJS.EventEmitter;
+	}
+
+	// Code generated from https://github.com/atom/electron/blob/v0.35.4/docs/api/power-save-blocker.md
+
+	/** The `powerSaveBlocker` module is used to block the system from entering low-power (sleep) mode and thus allowing the app to keep the system and screen active. */
+	interface PowerSaveBlockerModule extends NodeJS.EventEmitter {
+		//
+		// Methods
+		//
+		/** Starts preventing the system from entering lower-power mode. */
+		/** @param type - Power save blocker type. */
+		start(type: string): number;
+		/** Stops the specified power save blocker. */
+		/** @param id - The power save blocker id returned by `powerSaveBlocker.start`. */
+		stop(id: number): void;
+		/** Returns a boolean whether the corresponding `powerSaveBlocker` has started. */
+		/** @param id - The power save blocker id returned by `powerSaveBlocker.start`. */
+		isStarted(id: number): boolean;
+	}
+
+	// Code generated from https://github.com/atom/electron/blob/v0.35.4/docs/api/protocol.md
+
+	/** The `protocol` module can register a custom protocol or intercept an existing protocol. */
+	interface ProtocolModule extends NodeJS.EventEmitter {
+		//
+		// Methods
+		//
+		/** A standard `scheme` adheres to what RFC 3986 calls [generic URI syntax](https://tools. */
+		/** @param schemes - Custom schemes to be registered as standard schemes. */
+		registerStandardSchemes(schemes: string[]): void;
+		/** Registers a protocol of `scheme` that will send the file as a response. */
+		registerFileProtocol(scheme: string, handler: Function, completion?: Function): void;
+		/** Registers a protocol of `scheme` that will send a `Buffer` as a response. */
+		registerBufferProtocol(scheme: string, handler: Function, completion?: Function): void;
+		/** Registers a protocol of `scheme` that will send a `String` as a response. */
+		registerStringProtocol(scheme: string, handler: Function, completion?: Function): void;
+		/** Registers a protocol of `scheme` that will send an HTTP request as a response. */
+		registerHttpProtocol(scheme: string, handler: Function, completion?: Function): void;
+		/** Unregisters the custom protocol of `scheme`. */
+		unregisterProtocol(scheme: string, completion?: Function): void;
+		/** The `callback` will be called with a boolean that indicates whether there is already a handler for `scheme`. */
+		isProtocolHandled(scheme: string, callback: Function): boolean;
+		/** Intercepts `scheme` protocol and uses `handler` as the protocol's new handler which sends a file as a response. */
+		interceptFileProtocol(scheme: string, handler: Function, completion?: Function): void;
+		/** Intercepts `scheme` protocol and uses `handler` as the protocol's new handler which sends a `String` as a response. */
+		interceptStringProtocol(scheme: string, handler: Function, completion?: Function): void;
+		/** Intercepts `scheme` protocol and uses `handler` as the protocol's new handler which sends a `Buffer` as a response. */
+		interceptBufferProtocol(scheme: string, handler: Function, completion?: Function): void;
+		/** Intercepts `scheme` protocol and uses `handler` as the protocol's new handler which sends a new HTTP request as a response. */
+		interceptHttpProtocol(scheme: string, handler: Function, completion?: Function): void;
+		/** Remove the interceptor installed for `scheme` and restore its original handler. */
+		uninterceptProtocol(scheme: string, completion?: Function): void;
+	}
+
+	// Code generated from https://github.com/atom/electron/blob/v0.35.4/docs/api/remote.md
+
+	/** The `remote` module provides a simple way to do inter-process communication (IPC) between the renderer process (web page) and the main process. */
+	interface RemoteModule extends NodeJS.EventEmitter {
+		//
+		// Methods
+		//
+		/** Returns the object returned by `require(module)` in the main process. */
+		require(module: string): any;
+		/** Returns the [`BrowserWindow`](browser-window. */
+		getCurrentWindow(): BrowserWindow;
+		/** Returns the [`WebContents`](web-contents. */
+		getCurrentWebContents(): WebContents;
+		/** Returns the global variable of `name` (e. */
+		getGlobal(name: string): any;
+	}
+
+	// Code generated from https://github.com/atom/electron/blob/v0.35.4/docs/api/screen.md
+
+	/** The `screen` module retrieves information about screen size, displays, cursor position, etc. */
+	interface ScreenModule extends NodeJS.EventEmitter {
+		//
+		// Events
+		//
+		on(event: string, listener: Function): NodeJS.EventEmitter;
+		/** Emitted when `newDisplay` has been added. */
+		on(event: 'display-added', listener: (event: Event, newDisplay: Object) => void): NodeJS.EventEmitter;
+		/** Emitted when `oldDisplay` has been removed. */
+		on(event: 'display-removed', listener: (event: Event, oldDisplay: Object) => void): NodeJS.EventEmitter;
+		/** Emitted when one or more metrics change in a `display`. */
+		on(event: 'display-metrics-changed', listener: (event: Event, display: Object, changedMetrics: Array) => void): NodeJS.EventEmitter;
+		//
+		// Methods
+		//
+		/** Returns the current absolute position of the mouse pointer. */
+		getCursorScreenPoint(): number[];
+		/** Returns the primary display. */
+		getPrimaryDisplay(): any;
+		/** Returns an array of displays that are currently available. */
+		getAllDisplays(): any[];
+		/** Returns the display nearest the specified point. */
+		getDisplayNearestPoint(point: { x: number; y: number; }): any;
+		/** Returns the display that most closely intersects the provided bounds. */
+		getDisplayMatching(rect: { x: number; y: number; width: number; height: number; }): any;
+	}
+
+	// Code generated from https://github.com/atom/electron/blob/v0.35.4/docs/api/session.md
+
+	/** The `session` module can be used to create new `Session` objects. */
+	class Session extends NodeJS.EventEmitter {
+		//
+		// Properties
+		//
+		/** Returns the default session object of the app. */
+		static defaultSession: Session;
+		//
+		// Events
+		//
+		on(event: string, listener: Function): NodeJS.EventEmitter;
+		/** Emitted when Electron is about to download `item` in `webContents`. */
+		on(event: 'will-download', listener: (event: Event, item: DownloadItem, webContents: WebContents) => void): NodeJS.EventEmitter;
+		//
+		// Methods
+		//
+		/** Clears the session’s HTTP cache. */
+		/** @param callback - Called when operation is done */
+		clearCache(callback: Function): void;
+		/** Clears the data of web storages. */
+		/** @param callback - Called when operation is done. */
+		clearStorageData(options: { origin: string; storages: Array; quotas: Array; }, callback: Function): void;
+		/** If `config` is a PAC url, it is used directly otherwise `config` is parsed based on the following rules indicating which proxies to use for the session. */
+		/** @param callback - Called when operation is done. */
+		setProxy(config: string, callback: Function): void;
+		/** Returns a new `Session` instance from `partition` string. */
+		static fromPartition(partition: string): void;
+		//
+		// Grouped Definitions
+		//
+		cookies: {
+			/** undefined */
+			get(details: { url: string; name: string; domain: string; path: string; secure: Boolean; session: Boolean; callback: Function; error: Error; cookies: Array; }, callback: any): void;
+			/** * `callback` Function - function(error) * `error` Error */
+			set(details: { url: string; name: string; value: string; domain: string; path: string; secure: Boolean; session: Boolean; expirationDate: any; }, callback: any): void;
+			/** undefined */
+			/** @param callback - function(error) */
+			remove(details: { url: string; name: string; }, callback: Function): void;
+		};
+	}
+
+	// Code generated from https://github.com/atom/electron/blob/v0.35.4/docs/api/shell.md
+
+	/** The `shell` module provides functions related to desktop integration. */
+	interface ShellModule extends NodeJS.EventEmitter {
+		//
+		// Methods
+		//
+		/** Show the given file in a file manager. */
+		showItemInFolder(fullPath: string): void;
+		/** Open the given file in the desktop's default manner. */
+		openItem(fullPath: string): void;
+		/** Open the given external protocol URL in the desktop's default manner. */
+		openExternal(url: string): void;
+		/** Move the given file to trash and returns a boolean status for the operation. */
+		moveItemToTrash(fullPath: string): void;
+		/** Play the beep sound. */
+		beep(): void;
+	}
+
+	// Code generated from https://github.com/atom/electron/blob/v0.35.4/docs/api/tray.md
+
+	/** A `Tray` represents an icon in an operating system's notification area, it is usually attached with a context menu. */
+	class Tray extends NodeJS.EventEmitter {
+		//
+		// Events
+		//
+		on(event: string, listener: Function): NodeJS.EventEmitter;
+		/** Emitted when the tray icon is clicked. */
+		on(event: 'click', listener: (event: Event, bounds: { x: number; y: number; width: number; height: number; }) => void): NodeJS.EventEmitter;
+		/** (Windows) Emitted when the tray icon is right clicked. */
+		on(event: 'right-click', listener: (event: Event, bounds: { x: number; y: number; width: number; height: number; }) => void): NodeJS.EventEmitter;
+		/** (Windows) Emitted when the tray icon is double clicked. */
+		on(event: 'double-click', listener: (event: Event, bounds: { x: number; y: number; width: number; height: number; }) => void): NodeJS.EventEmitter;
+		/** (Windows) Emitted when the tray balloon shows. */
+		on(event: 'balloon-show', listener: Function): NodeJS.EventEmitter;
+		/** (Windows) Emitted when the tray balloon is clicked. */
+		on(event: 'balloon-click', listener: Function): NodeJS.EventEmitter;
+		/** (Windows) Emitted when the tray balloon is closed because of timeout or user manually closes it. */
+		on(event: 'balloon-closed', listener: Function): NodeJS.EventEmitter;
+		/** (OS X) Emitted when any dragged items are dropped on the tray icon. */
+		on(event: 'drop', listener: Function): NodeJS.EventEmitter;
+		/** (OS X) Emitted when dragged files are dropped in the tray icon. */
+		on(event: 'drop-files', listener: (event: any, files: Array) => void): NodeJS.EventEmitter;
+		/** (OS X) Emitted when a drag operation enters the tray icon. */
+		on(event: 'drag-enter', listener: Function): NodeJS.EventEmitter;
+		/** (OS X) Emitted when a drag operation exits the tray icon. */
+		on(event: 'drag-leave', listener: Function): NodeJS.EventEmitter;
+		/** (OS X) Emitted when a drag operation ends on the tray or ends at another location. */
+		on(event: 'drag-end', listener: Function): NodeJS.EventEmitter;
+		//
+		// Methods
+		//
+		/** Destroys the tray icon immediately. */
+		destroy(): void;
+		/** Sets the `image` associated with this tray icon. */
+		setImage(image: NativeImage): void;
+		/** (OS X) Sets the `image` associated with this tray icon when pressed on OS X. */
+		setPressedImage(image: NativeImage): void;
+		/** Sets the hover text for this tray icon. */
+		setToolTip(toolTip: string): void;
+		/** (OS X) Sets the title displayed aside of the tray icon in the status bar. */
+		setTitle(title: string): void;
+		/** (OS X) Sets whether the tray icon's background becomes highlighted (in blue) when the tray icon is clicked. */
+		setHighlightMode(highlight: Boolean): void;
+		/** (Windows) Displays a tray balloon. */
+		displayBalloon(options: { icon: NativeImage; title: string; content: string; }): void;
+		/** (Windows) Popups the context menu of tray icon. */
+		/** @param position - The pop up position. */
+		popUpContextMenu(menu?: Menu, position?: { x: number; y: number; }): void;
+		/** Sets the context menu for this icon. */
+		setContextMenu(menu: Menu): void;
+	}
+
+	// Code generated from https://github.com/atom/electron/blob/v0.35.4/docs/api/web-contents.md
+
+	/** `webContents` is an [EventEmitter](http://nodejs. */
+	class WebContents extends NodeJS.EventEmitter {
+		//
+		// Properties
+		//
+		/** Returns the [session](session. */
+		session: Session;
+		/** Get the `WebContents` of DevTools for this `WebContents`. */
+		devToolsWebContents: WebContents;
+		//
+		// Events
+		//
+		on(event: string, listener: Function): NodeJS.EventEmitter;
+		/** Emitted when the navigation is done, i. */
+		on(event: 'did-finish-load', listener: Function): NodeJS.EventEmitter;
+		/** This event is like `did-finish-load` but emitted when the load failed or was cancelled, e. */
+		on(event: 'did-fail-load', listener: (event: Event, errorCode: number, errorDescription: string, validatedURL: string) => void): NodeJS.EventEmitter;
+		/** Emitted when a frame has done navigation. */
+		on(event: 'did-frame-finish-load', listener: (event: Event, isMainFrame: Boolean) => void): NodeJS.EventEmitter;
+		/** Corresponds to the points in time when the spinner of the tab started spinning. */
+		on(event: 'did-start-loading', listener: Function): NodeJS.EventEmitter;
+		/** Corresponds to the points in time when the spinner of the tab stopped spinning. */
+		on(event: 'did-stop-loading', listener: Function): NodeJS.EventEmitter;
+		/** Emitted when details regarding a requested resource are available. */
+		on(event: 'did-get-response-details', listener: (event: Event, status: Boolean, newURL: string, originalURL: string, httpResponseCode: number, requestMethod: string, referrer: string, headers: Object) => void): NodeJS.EventEmitter;
+		/** Emitted when a redirect is received while requesting a resource. */
+		on(event: 'did-get-redirect-request', listener: (event: Event, oldURL: string, newURL: string, isMainFrame: Boolean, httpResponseCode: number, requestMethod: string, referrer: string, headers: Object) => void): NodeJS.EventEmitter;
+		/** Emitted when the document in the given frame is loaded. */
+		on(event: 'dom-ready', listener: (event: Event) => void): NodeJS.EventEmitter;
+		/** Emitted when page receives favicon urls. */
+		on(event: 'page-favicon-updated', listener: (event: Event, favicons: Array) => void): NodeJS.EventEmitter;
+		/** Emitted when the page requests to open a new window for a `url`. */
+		on(event: 'new-window', listener: (event: Event, url: string, frameName: string, disposition: string, options: Object) => void): NodeJS.EventEmitter;
+		/** Emitted when a user or the page wants to start navigation. */
+		on(event: 'will-navigate', listener: (event: Event, url: string) => void): NodeJS.EventEmitter;
+		/** Emitted when the renderer process has crashed. */
+		on(event: 'crashed', listener: Function): NodeJS.EventEmitter;
+		/** Emitted when a plugin process has crashed. */
+		on(event: 'plugin-crashed', listener: (event: Event, name: string, version: string) => void): NodeJS.EventEmitter;
+		/** Emitted when `webContents` is destroyed. */
+		on(event: 'destroyed', listener: Function): NodeJS.EventEmitter;
+		/** Emitted when DevTools is opened. */
+		on(event: 'devtools-opened', listener: Function): NodeJS.EventEmitter;
+		/** Emitted when DevTools is closed. */
+		on(event: 'devtools-closed', listener: Function): NodeJS.EventEmitter;
+		/** Emitted when DevTools is focused / opened. */
+		on(event: 'devtools-focused', listener: Function): NodeJS.EventEmitter;
+		/** Emitted when failed to verify the `certificate` for `url`. */
+		on(event: 'certificate-error', listener: (event: Event, url: URL, error: string, certificate: { data: Buffer; issuerName: string; }, callback: Function) => void): NodeJS.EventEmitter;
+		/** Emitted when a client certificate is requested. */
+		on(event: 'select-client-certificate', listener: (event: Event, url: URL, certificateList: Objects, callback: Function) => void): NodeJS.EventEmitter;
+		/** Emitted when `webContents` wants to do basic auth. */
+		on(event: 'login', listener: (event: Event, request: { method: string; url: URL; referrer: URL; }, authInfo: { isProxy: Boolean; scheme: string; host: string; port: number; realm: string; }, callback: Function) => void): NodeJS.EventEmitter;
+		//
+		// Methods
+		//
+		/** Loads the `url` in the window, the `url` must contain the protocol prefix, e. */
+		loadURL(url: URL, options?: { httpReferrer: string; userAgent: string; extraHeaders: string; }): void;
+		/** Initiates a download of the resource at `url` without navigating. */
+		downloadURL(url: URL): void;
+		/** Returns URL of the current web page. */
+		getURL(): string;
+		/** Returns the title of the current web page. */
+		getTitle(): string;
+		/** Returns whether web page is still loading resources. */
+		isLoading(): boolean;
+		/** Returns whether the web page is waiting for a first-response from the main resource of the page. */
+		isWaitingForResponse(): boolean;
+		/** Stops any pending navigation. */
+		stop(): void;
+		/** Reloads the current web page. */
+		reload(): void;
+		/** Reloads current page and ignores cache. */
+		reloadIgnoringCache(): void;
+		/** Returns whether the browser can go back to previous web page. */
+		canGoBack(): boolean;
+		/** Returns whether the browser can go forward to next web page. */
+		canGoForward(): boolean;
+		/** Returns whether the web page can go to `offset`. */
+		canGoToOffset(offset: number): boolean;
+		/** Clears the navigation history. */
+		clearHistory(): void;
+		/** Makes the browser go back a web page. */
+		goBack(): void;
+		/** Makes the browser go forward a web page. */
+		goForward(): void;
+		/** Navigates browser to the specified absolute web page index. */
+		goToIndex(index: number): void;
+		/** Navigates to the specified offset from the "current entry". */
+		goToOffset(offset: number): void;
+		/** Whether the renderer process has crashed. */
+		isCrashed(): boolean;
+		/** Overrides the user agent for this web page. */
+		setUserAgent(userAgent: string): void;
+		/** Returns a `String` representing the user agent for this web page. */
+		getUserAgent(): string;
+		/** Injects CSS into the current web page. */
+		insertCSS(css: string): void;
+		/** Evaluates `code` in page. */
+		executeJavaScript(code: string, userGesture?: Boolean): void;
+		/** Mute the audio on the current web page. */
+		setAudioMuted(muted: Boolean): void;
+		/** Returns whether this page has been muted. */
+		isAudioMuted(): boolean;
+		/** Executes the editing command `undo` in web page. */
+		undo(): void;
+		/** Executes the editing command `redo` in web page. */
+		redo(): void;
+		/** Executes the editing command `cut` in web page. */
+		cut(): void;
+		/** Executes the editing command `copy` in web page. */
+		copy(): void;
+		/** Executes the editing command `paste` in web page. */
+		paste(): void;
+		/** Executes the editing command `pasteAndMatchStyle` in web page. */
+		pasteAndMatchStyle(): void;
+		/** Executes the editing command `delete` in web page. */
+		delete(): void;
+		/** Executes the editing command `selectAll` in web page. */
+		selectAll(): void;
+		/** Executes the editing command `unselect` in web page. */
+		unselect(): void;
+		/** Executes the editing command `replace` in web page. */
+		replace(text: string): void;
+		/** Executes the editing command `replaceMisspelling` in web page. */
+		replaceMisspelling(text: string): void;
+		/** Checks if any ServiceWorker is registered and returns a boolean as response to `callback`. */
+		hasServiceWorker(callback: Function): boolean;
+		/** Unregisters any ServiceWorker if present and returns a boolean as response to `callback` when the JS promise is fulfilled or false when the JS promise is rejected. */
+		unregisterServiceWorker(callback: Function): void;
+		/** Prints window's web page. */
+		print(options?: { silent: Boolean; printBackground: Boolean; }): void;
+		/** `callback` Function - `function(error, data) {}` */
+		printToPDF(options: { marginsType: number; pageSize: string; printBackground: Boolean; printSelectionOnly: Boolean; landscape: Boolean; }, callback: any): void;
+		/** Adds the specified path to DevTools workspace. */
+		addWorkSpace(path: string): void;
+		/** Removes the specified path from DevTools workspace. */
+		removeWorkSpace(path: string): void;
+		/** Opens the developer tools. */
+		openDevTools(options?: any): void;
+		/** Closes the developer tools. */
+		closeDevTools(): void;
+		/** Returns whether the developer tools are opened. */
+		isDevToolsOpened(): boolean;
+		/** Toggles the developer tools. */
+		toggleDevTools(): void;
+		/** Returns whether the developer tools is focused. */
+		isDevToolsFocused(): boolean;
+		/** Starts inspecting element at position (`x`, `y`). */
+		inspectElement(x: number, y: number): void;
+		/** Opens the developer tools for the service worker context. */
+		inspectServiceWorker(): void;
+		/** Send an asynchronous message to renderer process via `channel`, you can also send arbitrary arguments. */
+		send(channel: string, ...arg: any[]): void;
+		/** Enable device emulation with the given parameters. */
+		enableDeviceEmulation(parameters: { screenPosition: string; screenSize: { width: number; height: number; }; viewPosition: { x: number; y: number; }; deviceScaleFactor: number; viewSize: { width: number; height: number; }; fitToView: Boolean; offset: { x: Float; y: Float; }; scale: Float; }): void;
+		/** Disable device emulation enabled by `webContents. */
+		disableDeviceEmulation(): void;
+		/** Sends an input `event` to the page. */
+		sendInputEvent(event: { type: string; modifiers: Array; }): void;
+		/** Begin subscribing for presentation events and captured frames, the `callback` will be called with `callback(frameBuffer)` when there is a presentation event. */
+		beginFrameSubscription(callback: Function): void;
+		/** End subscribing for frame presentation events. */
+		endFrameSubscription(): void;
+		/** Returns true if the process of saving page has been initiated successfully. */
+		/** @param fullPath - The full file path. */
+		/** @param saveType - Specify the save type. */
+		/** @param callback - `function(error) {}`. */
+		savePage(fullPath: string, saveType: string, callback: Function): void;
+	}
+
+	// Code generated from https://github.com/atom/electron/blob/v0.35.4/docs/api/web-frame.md
+
+	/** The `web-frame` module allows you to customize the rendering of the current web page. */
+	interface WebFrameModule extends NodeJS.EventEmitter {
+		//
+		// Methods
+		//
+		/** Changes the zoom factor to the specified factor. */
+		/** @param factor - Zoom factor. */
+		setZoomFactor(factor: Number): void;
+		/** Returns the current zoom factor. */
+		getZoomFactor(): number;
+		/** Changes the zoom level to the specified level. */
+		/** @param level - Zoom level */
+		setZoomLevel(level: Number): void;
+		/** Returns the current zoom level. */
+		getZoomLevel(): number;
+		/** Sets the maximum and minimum zoom level. */
+		setZoomLevelLimits(minimumLevel: Number, maximumLevel: Number): void;
+		/** Sets a provider for spell checking in input fields and text areas. */
+		setSpellCheckProvider(language: string, autoCorrectWord: Boolean, provider: Object): void;
+		/** Registers the `scheme` as secure scheme. */
+		registerURLSchemeAsSecure(scheme: string): void;
+		/** Resources will be loaded from this `scheme` regardless of the current page's Content Security Policy. */
+		registerURLSchemeAsBypassingCSP(scheme: string): void;
+		/** Registers the `scheme` as secure, bypasses content security policy for resources and allows registering ServiceWorker. */
+		registerURLSchemeAsPrivileged(scheme: string): void;
 	}
 
 	interface Electron {
@@ -576,6 +1066,32 @@ declare module 'electron' {
 		ipcMain: IpcMainModule;
 		/** The `ipcRenderer` module provides a few methods so you can send synchronous and asynchronous messages from the render process (web page) to the main process. */
 		ipcRenderer: IpcRendererModule;
+		/** The `menu-item` module allows you to add items to an application or context [`menu`](menu. */
+		MenuItem: typeof MenuItem;
+		/** The `menu` class is used to create native menus that can be used as application menus and [context menus](https://developer. */
+		Menu: typeof Menu;
+		/** In Electron, for the APIs that take images, you can pass either file paths or `nativeImage` instances. */
+		NativeImage: typeof NativeImage;
+		/** The `power-monitor` module is used to monitor power state changes. */
+		powerMonitor: PowerMonitorModule;
+		/** The `powerSaveBlocker` module is used to block the system from entering low-power (sleep) mode and thus allowing the app to keep the system and screen active. */
+		powerSaveBlocker: PowerSaveBlockerModule;
+		/** The `protocol` module can register a custom protocol or intercept an existing protocol. */
+		protocol: ProtocolModule;
+		/** The `remote` module provides a simple way to do inter-process communication (IPC) between the renderer process (web page) and the main process. */
+		remote: RemoteModule;
+		/** The `screen` module retrieves information about screen size, displays, cursor position, etc. */
+		screen: ScreenModule;
+		/** The `session` module can be used to create new `Session` objects. */
+		Session: typeof Session;
+		/** The `shell` module provides functions related to desktop integration. */
+		shell: ShellModule;
+		/** A `Tray` represents an icon in an operating system's notification area, it is usually attached with a context menu. */
+		Tray: typeof Tray;
+		/** `webContents` is an [EventEmitter](http://nodejs. */
+		WebContents: typeof WebContents;
+		/** The `web-frame` module allows you to customize the rendering of the current web page. */
+		webFrame: WebFrameModule;
 		// Data types defined in https://github.com/atom/electron/blob/v0.35.4/docs/api/app.md
 		Task: typeof Task;
 		// Data types defined in https://github.com/atom/electron/blob/v0.35.4/docs/api/browser-window.md

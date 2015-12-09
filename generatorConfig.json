@@ -138,6 +138,111 @@
 					"on": { "params": { "callback": "(event: any) => void" } }
 				}
 			}
+		},
+		"menu-item.md": {
+			"mode": "Class"
+		},
+		"menu.md": {
+			"mode": "Class",
+			"patches": {
+				"methods": {
+					"items": { "returns": "MenuItem[]" }
+				}
+			}
+		},
+		"native-image.md": {
+			"mode": "Class",
+			"patches": {
+				"methods": {
+					"createEmpty": { "returns": "NativeImage" },
+					"createFromPath": { "returns": "NativeImage" },
+					"createFromBuffer": { "returns": "NativeImage" },
+					"createFromDataURL": { "returns": "NativeImage" },
+					"toPng": { "returns": "Buffer" },
+					"toJpeg": { "params": { "quality": "number" }, "returns": "Buffer" },
+					"toDataURL": { "returns": "string" },
+					"getSize": { "returns": "number[]" }
+				}
+			}
+		},
+		"power-monitor.md": {
+			"mode": "Module"
+		},
+		"power-save-blocker.md": {
+			"mode": "Module",
+			"patches": {
+				"methods": {
+					"start": { "returns": "number" }
+				}
+			}
+		},
+		"protocol.md": {
+			"mode": "Module",
+			"patches": {
+				"methods": {
+					"registerStandardSchemes": { "params": { "schemes": "string[]" } }
+				}
+			}
+		},
+		"remote.md": {
+			"mode": "Module",
+			"patches": {
+				"methods": {
+					"require": { "returns": "any" },
+					"getGlobal": { "returns": "any" }
+				}
+			}
+		},
+		"screen.md": {
+			"mode": "Module",
+			"patches": {
+				"methods": {
+					"getCursorScreenPoint": { "returns": "number[]" },
+					"getPrimaryDisplay": { "returns": "any" },
+					"getAllDisplays": { "returns": "any[]" },
+					"getDisplayNearestPoint": { "returns": "any" },
+					"getDisplayMatching": { "returns": "any" }
+				}
+			}
+		},
+		"session.md": {
+			"mode": "Class",
+			"patches": {
+				"properties": {
+					"defaultSession": { "type": "Session" }
+				}
+			}
+		},
+		"shell.md": {
+			"mode": "Module"
+		},
+		"tray.md": {
+			"mode": "Class",
+			"parsing": {
+				"methodsAreInstance": true
+			}
+		},
+		"web-contents.md": {
+			"mode": "Class",
+			"patches": {
+				"methods": {
+					"getURL": { "returns": "string" },
+					"getTitle": { "returns": "string" }
+				},
+				"properties": {
+					"session": { "type": "Session" },
+					"devToolsWebContents": { "type": "WebContents" }
+				}
+			}
+		},
+		"web-frame.md": {
+			"mode": "Module",
+			"patches": {
+				"methods": {
+					"getZoomFactor": { "returns": "number" },
+					"getZoomLevel": { "returns": "number" }
+				}
+			}
 		}
 	}
 }

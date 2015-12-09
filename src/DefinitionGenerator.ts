@@ -154,6 +154,8 @@ export class PropertyDefinition {
 	comment: string;
 	/** The property type. */
 	type: string;
+	/** Is static? */
+	static: boolean;
 	/** The prefixes. */
 	prefixes: string[];
 	/** The property type. */
@@ -278,6 +280,7 @@ export enum SectionRole {
 
 export class ParserSettings {
 	mode: OutputMode;
+	methodsAreInstance: boolean;
 	uncommonSections: {
 		[sectionName: string]: SectionRole;
 	} = {};
@@ -286,6 +289,8 @@ export class ParserSettings {
 // Some constants.
 const EventsSectionName = "Events";
 const MethodsSectionName = "Methods";
+const PropertiesSectionName = "Properties";
+const InstanceEventsSectionName = "Instance Events";
 const InstanceMethodsSectionName = "Instance Methods";
 const InstancePropertiesSectionName = "Instance Properties";
 
@@ -305,7 +310,10 @@ export function generate(url: string, code: string, settings: ParserSettings): G
 	
 	// Patch methods is*** or has*** with no known return type.
 	output.methods.forEach(method => {
-		if (!method.returns && (/^is[A-Z]\w*$/.test(method.name) || /^has[A-Z]\w*$/.test(method.name))) {
+		if (!method.returns && (
+			/^is[A-Z]\w*$/.test(method.name) || 
+			/^has[A-Z]\w*$/.test(method.name) ||
+			/^can[A-Z]\w*$/.test(method.name))) {
 				method.returns = new ParameterDefinition();
 				method.returns.type = 'boolean';
 			}
@@ -329,8 +337,12 @@ function parseTopLevelSection(url: string, section: mk.Section, output: Generate
 	// Get the section name.
 	output.name = section.name;
 	
+	// If it's a class, turn into class case.
+	if (settings.mode == OutputMode.Class)
+		output.name = output.name.charAt(0).toUpperCase() + output.name.substring(1);
+	
 	// Split into sections again.
-	var subsections = mk.splitIntoSectionSequence(section.lines, "## ");
+	var subsections = section.splitIntoSubsections();
 	
 	// Extract paragraphs from the preamble.
 	var preambleParagraphs = mk.splitIntoParagraphs(subsections.linesBefore);
@@ -345,15 +357,57 @@ function parseTopLevelSection(url: string, section: mk.Section, output: Generate
 	// If it's a class...
 	if (output.mode == OutputMode.Class) {
 		
-		// Look for the constructors section.
-		var ctorSection = subsections.findSection('Class: ' + output.name);
-		if (ctorSection)
-			parseMethods(url, ctorSection, output.constructors, output.dataTypes, { areCtor: true });
+		// Look for the class section.
+		var classSection = subsections.findSection('Class: ' + output.name);
+		if (classSection) {
+			
+			// Split into sections.
+			var classSubsections = classSection.splitIntoSubsections();
+			
+			// Parse the first section as constructors.
+			if (classSubsections.sections.length >= 1)
+				parseMethods(url, classSubsections.sections[0], output.constructors, output.dataTypes, { areCtor: true });
+			
+			// Look for the Events section.
+			var eventsSection = classSubsections.findSection(EventsSectionName);
+			if (eventsSection)
+				parseEvents(url, eventsSection, output.events, output.dataTypes);
+				
+			// Look for the Instance Events section.
+			var instanceEventsSection = classSubsections.findSection(InstanceEventsSectionName);
+			if (instanceEventsSection)
+				parseEvents(url, instanceEventsSection, output.events, output.dataTypes);
+				
+			// Look for the Instance Methods section.
+			var instanceMethodsSection = classSubsections.findSection(InstanceMethodsSectionName);
+			if (instanceMethodsSection)
+				parseMethods(url, instanceMethodsSection, output.methods, output.dataTypes, { });
+			
+			// Look for the Methods section (those are static).
+			var methodsSection = classSubsections.findSection(MethodsSectionName);
+			if (methodsSection)
+				parseMethods(url, methodsSection, output.methods, output.dataTypes, { staticPrefix: section.name });
+			
+			// Look for the Properties section.
+			var propertiesSection = classSubsections.findSection(PropertiesSectionName);
+			if (propertiesSection)
+				parseProperties(url, propertiesSection, output.properties, output.dataTypes, { areStatic: true });
+					
+			// Look for the Instance Properties section.
+			var instancePropertiesSection = classSubsections.findSection(InstancePropertiesSectionName);
+			if (instancePropertiesSection)
+				parseProperties(url, instancePropertiesSection, output.properties, output.dataTypes, { });
+		} 
 			
 		// Look for the Events section.
 		var eventsSection = subsections.findSection(EventsSectionName);
 		if (eventsSection)
 			parseEvents(url, eventsSection, output.events, output.dataTypes);
+			
+		// Look for the Instance Events section.
+		var instanceEventsSection = subsections.findSection(InstanceEventsSectionName);
+		if (instanceEventsSection)
+			parseEvents(url, instanceEventsSection, output.events, output.dataTypes);
 			
 		// Look for the Instance Methods section.
 		var instanceMethodsSection = subsections.findSection(InstanceMethodsSectionName);
@@ -363,12 +417,17 @@ function parseTopLevelSection(url: string, section: mk.Section, output: Generate
 		// Look for the Methods section (those are static).
 		var methodsSection = subsections.findSection(MethodsSectionName);
 		if (methodsSection)
-			parseMethods(url, methodsSection, output.methods, output.dataTypes, { staticPrefix: output.name });
-			
+			parseMethods(url, methodsSection, output.methods, output.dataTypes, { staticPrefix: section.name, forceInstance: settings.methodsAreInstance });
+		
+		// Look for the Properties section.
+		var propertiesSection = subsections.findSection(PropertiesSectionName);
+		if (propertiesSection)
+			parseProperties(url, propertiesSection, output.properties, output.dataTypes, { areStatic: true });
+				
 		// Look for the Instance Properties section.
 		var instancePropertiesSection = subsections.findSection(InstancePropertiesSectionName);
 		if (instancePropertiesSection)
-			parseProperties(url, instancePropertiesSection, output.properties, output.dataTypes);
+			parseProperties(url, instancePropertiesSection, output.properties, output.dataTypes, { });
 		
 	} else {
 		
@@ -382,6 +441,10 @@ function parseTopLevelSection(url: string, section: mk.Section, output: Generate
 		if (methodsSection)
 			parseMethods(url, methodsSection, output.methods, output.dataTypes, { });
 		
+		// Look for the Properties section.
+		var propertiesSection = subsections.findSection(PropertiesSectionName);
+		if (propertiesSection)
+			parseProperties(url, propertiesSection, output.properties, output.dataTypes, { });
 	}
 	
 	// Parse other sections.
@@ -392,10 +455,10 @@ function parseTopLevelSection(url: string, section: mk.Section, output: Generate
 			if (section) {
 				switch (uncommonSectionRole) {
 					case SectionRole.Methods:
-						parseMethods(url, section, output.methods, output.dataTypes, { staticPrefix: output.name });
+						parseMethods(url, section, output.methods, output.dataTypes, { staticPrefix: section.name });
 						break;
 					case SectionRole.Properties:
-						parseProperties(url, section, output.properties, output.dataTypes);
+						parseProperties(url, section, output.properties, output.dataTypes, { });
 						break;
 					case SectionRole.Events:
 						parseEvents(url, section, output.events, output.dataTypes);
@@ -486,10 +549,17 @@ function parseParameterList(url: string, items: mk.ListItem[], referencedDataTyp
 				parameter.type = parameter.type.substring(0, parameter.type.length - OptionalPostfix.length).trim();
 				parameter.optional = true;
 			}
+			
+			// If there's (...) at the end of the type, remove it.
+			parameter.type = parameter.type.replace(/ *\([^)]+\)$/, '');
 
 			// If type is empty, then try with the comment.
 			if (parameter.type.length == 0 && parameter.comment)
 				parameter.type = parameter.comment;
+				
+			// If type is [simpleName] or [simpleName][simpleName], then remove the brackets.
+			parameter.type = parameter.type.replace(/^\[(\w+)\]$/, '$1');
+			parameter.type = parameter.type.replace(/^\[(\w+)\]\[(\w+)\]$/, '$1');
 
 			// If it's an Object...
 			if (parameter.type === 'Object') {
@@ -541,9 +611,13 @@ function parseParameterList(url: string, items: mk.ListItem[], referencedDataTyp
 			else if (typeMatch = parameter.type.match(/^\[(\w+)\]\(.*\)$/)) {
 				// Use the custom type name.
 				parameter.type = typeMatch[1];
+			// If the type is empty...
+			}
+			else if (parameter.type.length == 0) {
+				parameter.type = 'any';
 			} else {
 				// Can't parse type.
-				invalid = true;
+				ErrorManager.logWarning(url, item.lineNum, 'Invalid parameter type "%s"', parameter.type);
 				parameter.type = 'any';
 			}
 		}
@@ -559,20 +633,25 @@ function parseParameterList(url: string, items: mk.ListItem[], referencedDataTyp
 	return parameters;
 }
 
-function parseProperties(url: string, section: mk.Section, output: PropertyDefinition[], dataTypes: DataTypeDefinition[]) {
+function parseProperties(url: string, section: mk.Section, output: PropertyDefinition[], dataTypes: DataTypeDefinition[],
+	options: { areStatic?: boolean; }) {
 	
 	ErrorManager.logVerbose('parsing properties from %s', url);
 	
 	// Split into sections again.
-	var subsections = mk.splitIntoSectionSequence(section.lines, "### ");
+	var subsections = section.splitIntoSubsections();
 	
 	// For each section...
 	subsections.sections.forEach(section => {
 		// Parse the property name.
 		var propertyNameMatch = section.name.match(/^`([^`]+)`(?:\s+_([^_]+)_)*$/);
 		if (!propertyNameMatch) {
-			ErrorManager.logError(url, section.lineNum, 'Invalid property line "%s"', section.name);
-			return;
+			if (options.areStatic)
+				propertyNameMatch = section.name.match(/^\w+\.(\w+)$/);
+			if (!propertyNameMatch) {
+				ErrorManager.logError(url, section.lineNum, 'Invalid property line "%s"', section.name);
+				return;
+			}
 		}
 		
 		// Extract the property name with its prefixes.
@@ -583,6 +662,8 @@ function parseProperties(url: string, section: mk.Section, output: PropertyDefin
 		propertyDefinition.name = propertyNameWithPrefixes[propertyNameWithPrefixes.length - 1];
 		propertyDefinition.url = mk.makeUrl(url, section.name);
 		propertyDefinition.type = 'any';
+		if (options.areStatic)
+			propertyDefinition.static = true;
 		if (propertyNameWithPrefixes.length > 2)
 			propertyDefinition.prefixes = propertyNameWithPrefixes.slice(1, propertyNameWithPrefixes.length - 1);
 		output.push(propertyDefinition);
@@ -605,7 +686,7 @@ function parseProperties(url: string, section: mk.Section, output: PropertyDefin
 }
 
 function parseMethods(url: string, section: mk.Section, output: MethodDefinition[], dataTypes: DataTypeDefinition[],
-	options: { areCtor?: boolean; staticPrefix?: string; }) {
+	options: { areCtor?: boolean; staticPrefix?: string; forceInstance?: boolean }) {
 	
 	if (options.areCtor)
 		ErrorManager.logVerbose('parsing constructors from %s', url);
@@ -613,15 +694,23 @@ function parseMethods(url: string, section: mk.Section, output: MethodDefinition
 		ErrorManager.logVerbose('parsing methods from %s', url);
 	
 	// Split into sections again.
-	var subsections = mk.splitIntoSectionSequence(section.lines, "### ");
+	var subsections = section.splitIntoSubsections();
 	
 	// For each section...
 	subsections.sections.forEach(section => {
 		// Parse the method name.
 		var methodNameMatch = section.name.match(/^`([^`]+)`(?:\s+_([^_]+)_)*$/);
 		if (!methodNameMatch) {
-			ErrorManager.logError(url, section.lineNum, 'Invalid method line "%s"', section.name);
-			return;
+			// Try without `.
+			methodNameMatch = section.name.match(/^([\w\.]+\([^\)]*\))()$/);
+			if (!methodNameMatch) {
+				if (options.areCtor)
+					methodNameMatch = section.name.match(/^new (.+)()*$/);
+				if (!methodNameMatch) {
+					ErrorManager.logError(url, section.lineNum, 'Invalid method line "%s"', section.name);
+					return;
+				}
+			}
 		}
 		
 		// Extract the method signature and parse it.
@@ -637,7 +726,7 @@ function parseMethods(url: string, section: mk.Section, output: MethodDefinition
 		var methodNameWithPrefixes = methodSignatureMatch[1].split('.');
 		
 		// Determine if the method is static.
-		var isStatic = options.staticPrefix && methodNameWithPrefixes[0] == options.staticPrefix;
+		var isStatic = !options.forceInstance && options.staticPrefix && methodNameWithPrefixes[0] == options.staticPrefix;
 		
 		// Check for varargs.
 		var methodParametersString = methodSignatureMatch[2];
@@ -648,12 +737,25 @@ function parseMethods(url: string, section: mk.Section, output: MethodDefinition
 			methodParametersString = methodParametersString.substring(0, methodParametersString.length - varargsPostfix.length);
 		}
 		
+		// Remove spaces.
+		methodParametersString = methodParametersString.replace(/ /g, '');
+		
 		// Parse the parameters.
-		// https://regex101.com/r/wN6sQ0/1
-		var methodParametersStringMatch = getAllMatches(methodParametersString, /(\[),? *(\w+) *(\])|,? *(\w+)/g);
+		// https://regex101.com/r/wN6sQ0/2
+		var methodParametersStringMatch = getAllMatches(methodParametersString, /(\[),?(\w+(?:,\w+)*)(\])|,?(\w+)/g);
 		if (!methodParametersStringMatch) {
 			ErrorManager.logError(url, section.lineNum, 'Invalid method parameters "%s"', methodParametersString);
 			return;
+		}
+		
+		// Expand optional parameters that may be grouped in the same [...]
+		for (var i = 0; i < methodParametersStringMatch.length; i++) {
+			var parameterMatch = methodParametersStringMatch[i];
+			if (parameterMatch[1] && parameterMatch[1].indexOf(',') != -1) {
+				var groupedParameters = parameterMatch[1].split(',');
+				var expandedParameters = groupedParameters.map(item => [ '[', item, ']', undefined ]);
+				methodParametersStringMatch.splice.apply(methodParametersStringMatch, (<any[]>[i, 1]).concat(expandedParameters));
+			}
 		}
 		
 		// Create the method definition.
@@ -752,6 +854,15 @@ function parseMethods(url: string, section: mk.Section, output: MethodDefinition
 		if (paragraphs.length > summaryParagraphIndex) {
 			var summarySentences = mk.SplitIntoSentences(paragraphs[summaryParagraphIndex].lines);
 			methodDefinition.comment = summarySentences[0].text;
+			
+			// If the comment starts with 'Returns the `...`'...
+			var returnCommentMatch = methodDefinition.comment.match(/^Returns the \[`(\w+)`\]/i);
+			if (!returnCommentMatch)
+				returnCommentMatch = methodDefinition.comment.match(/^Returns a `(\w+)`/i);
+			if (returnCommentMatch) {
+				methodDefinition.returns = new ParameterDefinition();
+				methodDefinition.returns.type = parseSimpleType(returnCommentMatch[1]);
+			}
 		}
 	});
 } 
@@ -761,7 +872,7 @@ function parseEvents(url: string, section: mk.Section, output: EventDefinition[]
 	ErrorManager.logVerbose('parsing events from %s', url);
 	
 	// Split into sections again.
-	var subsections = mk.splitIntoSectionSequence(section.lines, "### ");
+	var subsections = section.splitIntoSubsections();
 	
 	// For each section...
 	subsections.sections.forEach(section => {

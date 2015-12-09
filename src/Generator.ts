@@ -26,6 +26,7 @@ interface GeneratorConfig {
 				uncommonSections: {
 					[sectionName: string]: string;
 				}
+				methodsAreInstance: boolean
 			},
 			patches: {
 				methods: {
@@ -94,6 +95,8 @@ async function main(): Promise<void> {
 		var parserSettings = new gen.ParserSettings();
 		parserSettings.mode = gen.OutputMode[contentConfig.mode];
 		if (contentConfig.parsing) {
+			if (contentConfig.parsing.methodsAreInstance)
+				parserSettings.methodsAreInstance = true;
 			if (contentConfig.parsing.uncommonSections) {
 				for (var sectionName in contentConfig.parsing.uncommonSections) {
 					var sectionRole = contentConfig.parsing.uncommonSections[sectionName];
@@ -220,6 +223,8 @@ async function main(): Promise<void> {
 		// Write comment.
 		emitPlatformAwareComment(property.comment, property.platforms);
 		// Write it.
+		if (property.static)
+			outputFile.write('static ');
 		outputFile.writeFormat('%s: ', property.name);
 		if (property.type)
 			outputFile.write(property.type);

@@ -24,12 +24,19 @@ export class Sentence {
 
 /** Represents a parsed section */
 export class Section {
+	/** The section prefix. */
+	prefix: string;
 	/** The starting line number. */
 	lineNum: number;
 	/** The section name. */
 	name: string;
 	/** The section lines. */
 	lines: Line[];
+	
+	/** Splits into subsequences. */
+	splitIntoSubsections(): SectionSequence {
+		return splitIntoSectionSequence(this.lines, '#' + this.prefix);
+	}
 }
 
 /** Represents a list item. */
@@ -52,7 +59,7 @@ export class SectionSequence {
 	sections: Section[];
 	/** Finds the section with the specified name. */
 	findSection(name: string): Section {
-		return this.sections.find(value => value.name === name);
+		return this.sections.find(value => value.name == name);
 	}
 }
 
@@ -301,6 +308,7 @@ export function splitIntoSectionSequence(lines: Line[], sectionPrefix: string): 
 			// Make a new one.
 			currentSection = new Section();
 			currentSection.name = line.text.substring(sectionPrefix.length).trim();
+			currentSection.prefix = sectionPrefix;
 			currentSection.lineNum = line.num;
 			sectionStartIndex = i + 1;
 		}
