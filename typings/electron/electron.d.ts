@@ -5,6 +5,8 @@
 
 declare module 'electron' {
 
+	class Accelerator extends string { };
+
 	// Code generated from https://github.com/atom/electron/blob/v0.35.4/docs/api/app.md
 
 	class Task {
@@ -97,7 +99,7 @@ declare module 'electron' {
 		//
 		commandLine: {
 			/** Append a switch (with optional `value`) to Chromium's command line. */
-			appendSwitch(_switch: any, value?: any): void;
+			appendSwitch(switch: any, value?: any): void;
 			/** Append an argument to Chromium's command line. */
 			appendArgument(value: any): void;
 		};
@@ -324,7 +326,7 @@ declare module 'electron' {
 		blurWebView(): void;
 		/** Captures a snapshot of the page within `rect`. */
 		/** @param rect - The area of page to be captured, properties: */
-		capturePage(rect?: { x: number; y: number; width: number; height: number; }, callback?: Function): void;
+		capturePage(rect: { x: number; y: number; width: number; height: number; }, callback: Function): void;
 		/** Same as `webContents. */
 		print(options?: any): void;
 		/** Same as `webContents. */
@@ -429,6 +431,128 @@ declare module 'electron' {
 		cancelWatchEvent(): void;
 	}
 
+	// Code generated from https://github.com/atom/electron/blob/v0.35.4/docs/api/crash-reporter.md
+
+	/** The `crash-reporter` module enables sending your app's crash reports. */
+	interface CrashReporterModule extends NodeJS.EventEmitter {
+		//
+		// Methods
+		//
+		/** You are required to call this method before using other `crashReporter` APIs. */
+		start(options: { productName: string; companyName: string; submitURL: string; autoSubmit: Boolean; ignoreSystemCrashHandler: Boolean; extra: Object; }): void;
+		/** Returns the date and ID of the last crash report. */
+		getLastCrashReport(): any;
+		/** Returns all uploaded crash reports. */
+		getUploadedReports(): any[];
+	}
+
+	// Code generated from https://github.com/atom/electron/blob/v0.35.4/docs/api/dialog.md
+
+	/** The `dialog` module provides APIs to show native system dialogs, such as opening files or alerting, so web applications can deliver the same user experience as native applications. */
+	interface DialogModule extends NodeJS.EventEmitter {
+		//
+		// Methods
+		//
+		/** On success this method returns an array of file paths chosen by the user, otherwise it returns `undefined`. */
+		showOpenDialog(browserWindow?: BrowserWindow, options?: { title: string; defaultPath: string; filters: Array; properties: Array; }, callback?: (filenames: string[]) => void): string[];
+		/** On success this method returns the path of the file chosen by the user, otherwise it returns `undefined`. */
+		showSaveDialog(browserWindow?: BrowserWindow, options?: { title: string; defaultPath: string; filters: Array; }, callback?: (filename: string) => void): string;
+		/** Shows a message box, it will block the process until the message box is closed. */
+		showMessageBox(browserWindow?: BrowserWindow, options?: { type: string; buttons: Array; title: string; message: string; detail: string; icon: NativeImage; cancelId: number; noLink: Boolean; }, callback?: (response: any) => void): any;
+		/** Displays a modal dialog that shows an error message. */
+		showErrorBox(title: any, content: any): void;
+	}
+
+	// Code generated from https://github.com/atom/electron/blob/v0.35.4/docs/api/download-item.md
+
+	/** `DownloadItem` is an EventEmitter represents a download item in Electron. */
+	class DownloadItem extends NodeJS.EventEmitter {
+		//
+		// Events
+		//
+		on(event: string, listener: Function): NodeJS.EventEmitter;
+		/** Emits when the `downloadItem` gets updated. */
+		on(event: 'updated', listener: Function): NodeJS.EventEmitter;
+		/** Emits when the download is in a terminal state. */
+		on(event: 'done', listener: (event: Event, state: string) => void): NodeJS.EventEmitter;
+		//
+		// Methods
+		//
+		/** The API is only available in session's `will-download` callback function. */
+		/** @param path - Set the save file path of the download item. */
+		setSavePath(path: string): void;
+		/** Pauses the download. */
+		pause(): void;
+		/** Resumes the download that has been paused. */
+		resume(): void;
+		/** Cancels the download operation. */
+		cancel(): void;
+		/** Returns a `String` represents the origin url where the item is downloaded from. */
+		getURL(): string;
+		/** Returns a `String` represents the mime type. */
+		getMimeType(): string;
+		/** Returns a `Boolean` indicates whether the download has user gesture. */
+		hasUserGesture(): boolean;
+		/** Returns a `String` represents the file name of the download item. */
+		getFilename(): string;
+		/** Returns a `Integer` represents the total size in bytes of the download item. */
+		getTotalBytes(): number;
+		/** Returns a `Integer` represents the received bytes of the download item. */
+		getReceivedBytes(): number;
+		/** Returns a `String` represents the Content-Disposition field from the response header. */
+		getContentDisposition(): string;
+	}
+
+	// Code generated from https://github.com/atom/electron/blob/v0.35.4/docs/api/global-shortcut.md
+
+	/** The `global-shortcut` module can register/unregister a global keyboard shortcut with the operating system so that you can customize the operations for various shortcuts. */
+	interface Global-shortcutModule extends NodeJS.EventEmitter {
+		//
+		// Methods
+		//
+		/** Registers a global shortcut of `accelerator`. */
+		register(accelerator: Accelerator, callback: Function): void;
+		/** Returns `true` or `false` depending on whether the shortcut `accelerator` is registered. */
+		isRegistered(accelerator: Accelerator): boolean;
+		/** Unregisters the global shortcut of `accelerator`. */
+		unregister(accelerator: Accelerator): void;
+		/** Unregisters all of the global shortcuts. */
+		unregisterAll(): void;
+	}
+
+	// Code generated from https://github.com/atom/electron/blob/v0.35.4/docs/api/ipc-main.md
+
+	/** The `ipcMain` module, when used in the main process, handles asynchronous and synchronous messages sent from a renderer process (web page). */
+	interface IpcMainModule extends NodeJS.EventEmitter {
+		//
+		// Methods
+		//
+		/** When the event occurs the `callback` is called with an `event` object and a message, `arg`. */
+		/** @param channel - The event name. */
+		static on(channel: string, callback: (event: { returnValue: any; sender: WebContents; }) => void): void;
+	}
+
+	// Code generated from https://github.com/atom/electron/blob/v0.35.4/docs/api/ipc-renderer.md
+
+	/** The `ipcRenderer` module provides a few methods so you can send synchronous and asynchronous messages from the render process (web page) to the main process. */
+	interface IpcRendererModule extends NodeJS.EventEmitter {
+		//
+		// Methods
+		//
+		/** When the event occurs the `callback` is called with an `event` object and arbitrary arguments. */
+		/** @param channel - The event name. */
+		static on(channel: string, callback: (event: any) => void): void;
+		/** Send an event to the main process asynchronously via a `channel`, you can also send arbitrary arguments. */
+		/** @param channel - The event name. */
+		static send(channel: string, ...arg: any[]): void;
+		/** Send an event to the main process synchronously via a `channel`, you can also send arbitrary arguments. */
+		/** @param channel - The event name. */
+		static sendSync(channel: string, ...arg: any[]): void;
+		/** Like `ipcRenderer. */
+		/** @param channel - The event name. */
+		static sendToHost(channel: string, ...arg: any[]): void;
+	}
+
 	interface Electron {
 		/** The `app` module is responsible for controlling the application's lifecycle. */
 		app: AppModule;
@@ -440,10 +564,24 @@ declare module 'electron' {
 		clipboard: ClipboardModule;
 		/** The `content-tracing` module is used to collect tracing data generated by the underlying Chromium content module. */
 		contentTracing: ContentTracingModule;
+		/** The `crash-reporter` module enables sending your app's crash reports. */
+		crashReporter: CrashReporterModule;
+		/** The `dialog` module provides APIs to show native system dialogs, such as opening files or alerting, so web applications can deliver the same user experience as native applications. */
+		dialog: DialogModule;
+		/** `DownloadItem` is an EventEmitter represents a download item in Electron. */
+		DownloadItem: typeof DownloadItem;
+		/** The `global-shortcut` module can register/unregister a global keyboard shortcut with the operating system so that you can customize the operations for various shortcuts. */
+		global-shortcut: Global-shortcutModule;
+		/** The `ipcMain` module, when used in the main process, handles asynchronous and synchronous messages sent from a renderer process (web page). */
+		ipcMain: IpcMainModule;
+		/** The `ipcRenderer` module provides a few methods so you can send synchronous and asynchronous messages from the render process (web page) to the main process. */
+		ipcRenderer: IpcRendererModule;
 		// Data types defined in https://github.com/atom/electron/blob/v0.35.4/docs/api/app.md
 		Task: typeof Task;
 		// Data types defined in https://github.com/atom/electron/blob/v0.35.4/docs/api/browser-window.md
 		button: typeof button;
+		// Type aliases
+		Accelerator: typeof Accelerator;
 	}
 	var electron: Electron;
 	export = electron;

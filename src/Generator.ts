@@ -13,27 +13,40 @@ import * as ErrorManager from './ErrorManager';
 
 /** Interface for the configuration file. */
 interface GeneratorConfig {
-	[fileName: string]: {
-		mode: string;
-		patches: {
-			methods: {
-				[methodName: string]: {
-					returns: string;
-					params: {
-						[parameterName: string]: string;
+	rawBaseUrl: string;
+	htmlBaseUrl: string;
+	cacheDir: string;
+	typeAliases: {
+		[typeName: string]: string;
+	}
+	files: {
+		[fileName: string]: {
+			mode: string;
+			parsing: {
+				uncommonSections: {
+					[sectionName: string]: string;
+				}
+			},
+			patches: {
+				methods: {
+					[methodName: string]: {
+						returns: string;
+						params: {
+							[parameterName: string]: string;
+						}
 					}
 				}
-			}
-			events: {
-				[eventName: string]: {
-					returnParams: {
-						[parameterName: string]: string;
+				events: {
+					[eventName: string]: {
+						returnParams: {
+							[parameterName: string]: string;
+						}
 					}
 				}
-			}
-			properties: {
-				[propertyName: string]: {
-					type: string;
+				properties: {
+					[propertyName: string]: {
+						type: string;
+					}
 				}
 			}
 		}
@@ -51,38 +64,46 @@ class DownloadedContentMap {
 
 /** The application entry point. */
 async function main(): Promise<void> {
-	const rawBaseUrl = 'https://raw.githubusercontent.com/atom/electron/v0.35.4/docs/api';
-	const htmlBaseUrl = 'https://github.com/atom/electron/blob/v0.35.4/docs/api';
-	
 	// Load the configuration file.
 	const ConfigFileName = 'generatorConfig.json';
 	ErrorManager.logVerbose('loading configuration file %s', ConfigFileName);
 	var config = <GeneratorConfig>require('../' + ConfigFileName);
 	
 	// Create the download manager.
-	var downloadManager = new DownloadManager(rawBaseUrl, 'cache/electron-v0.35.4-docs-api');
+	var downloadManager = new DownloadManager(config.rawBaseUrl, config.cacheDir);
 	
 	// First we download all the stuff.
 	var downloadedContentMap = new DownloadedContentMap();
-	for (var fileName in config) {
+	for (var fileName in config.files) {
 		// Download it (or load it from the cache).
 		var fileContent = await downloadManager.downloadAsync(fileName);
 		
 		// Wrap it.
-		var downloadedContent = new DownloadedContent(fileName, fileContent, htmlBaseUrl + '/' + fileName);
+		var downloadedContent = new DownloadedContent(fileName, fileContent, config.htmlBaseUrl + '/' + fileName);
 		downloadedContentMap[fileName] = downloadedContent;
 	}
 	
 	// Then we parse and patch everyone.
 	var parsedContentList = <gen.GeneratedOutput[]>[];
-	for (var fileName in config) {
+	for (var fileName in config.files) {
 		// Get stuff.
-		var contentConfig = config[fileName];
+		var contentConfig = config.files[fileName];
 		var downloadedContent = downloadedContentMap[fileName];
 		
+		// Prepare parser settings.
+		var parserSettings = new gen.ParserSettings();
+		parserSettings.mode = gen.OutputMode[contentConfig.mode];
+		if (contentConfig.parsing) {
+			if (contentConfig.parsing.uncommonSections) {
+				for (var sectionName in contentConfig.parsing.uncommonSections) {
+					var sectionRole = contentConfig.parsing.uncommonSections[sectionName];
+					parserSettings.uncommonSections[sectionName] = gen.SectionRole[sectionRole];
+				}
+			}
+		}
+		
 		// Parse it.
-		var parsedContent = gen.generate(downloadedContent.htmlUrl, downloadedContent.content,
-			gen.OutputMode[contentConfig.mode]);
+		var parsedContent = gen.generate(downloadedContent.htmlUrl, downloadedContent.content, parserSettings);
 		
 		// If we have patches...
 		if (contentConfig.patches) {
@@ -163,11 +184,21 @@ async function main(): Promise<void> {
 	
 	function emitParameterList(params: gen.ParameterDefinition[]) {
 		params.forEach((parameter, parameterIndex) => {
+			// Write coma.
 			if (parameterIndex > 0)
 				outputFile.write(', ');
-			outputFile.write(parameter.name);
-			if (parameter.optional)
-				outputFile.write('?');
+				
+			// Write parameter name.
+			if (parameter.isRest) {
+				outputFile.write('...');
+				outputFile.write(parameter.name);
+			} else {
+				outputFile.write(parameter.name);
+				if (parameter.optional)
+					outputFile.write('?');
+			}
+			
+			// Write parameter type.
 			outputFile.write(': ');
 			if (parameter.type)
 				outputFile.write(parameter.type);
@@ -361,6 +392,14 @@ async function main(): Promise<void> {
 	outputFile.indent();
 	outputFile.writeLine();
 	// ----------------------------
+	if (config.typeAliases) {
+		for (var typeAlias in config.typeAliases) {
+			var aliasedType = config.typeAliases[typeAlias];
+			outputFile.writeLineFormat("class %s extends %s { };", typeAlias, aliasedType);
+		}
+		outputFile.writeLine();
+	}
+	// ----------------------------
 	for (var i = 0; i < parsedContentList.length; i++) {
 		emitParsedContent(parsedContentList[i]);
 		outputFile.writeLine();
@@ -387,6 +426,13 @@ async function main(): Promise<void> {
 			content.dataTypes.forEach(dataType => {
 				outputFile.writeLineFormat('%s: typeof %s;', dataType.name, dataType.name);
 			});
+		}
+	}
+	// Write aliased types.
+	if (config.typeAliases) {
+		outputFile.writeLine('// Type aliases');
+		for (var typeAlias in config.typeAliases) {
+			outputFile.writeLineFormat("%s: typeof %s;", typeAlias, typeAlias);
 		}
 	}
 	outputFile.unindent();
