@@ -1,0 +1,72 @@
+{
+	"app.md": {
+		"mode": "Module",
+		"patches": {
+			"methods": {
+				"getAppPath": { "returns": "string" },
+				"getPath": { "returns": "string" },
+				"getVersion": { "returns": "string" },
+				"getName": { "returns": "string" },
+				"getLocale": { "returns": "string" },
+				"dock.bounce": { "returns": "number" },
+				"dock.getBadge": { "returns": "string" },
+				"makeSingleInstance": { "params": { "callback": "(argv: string[], workingDirectory: string) => boolean" } }
+			},
+			"events": {
+				"certificate-error": { "returnParams": { "callback": "(value: boolean) => void" } },
+				"select-client-certificate": { "returnParams": { "callback": "(value: any) => void" } },
+				"login": { "returnParams": { "callback": "(username: string, secret: string) => void" } }
+			}
+		}
+	},
+	"auto-updater.md": {
+		"mode": "Module"
+	},
+	"browser-window.md": {
+		"mode": "Class",
+		"patches": {
+			"methods": {
+				"getAllWindows": { "returns": "BrowserWindow[]" },
+				"getFocusedWindow": { "returns": "BrowserWindow" },
+				"fromWebContents": { "returns": "BrowserWindow" },
+				"fromId": { "returns": "BrowserWindow" },
+				"setAspectRatio": { "params": { "aspectRatio": "number" } },
+				"getBounds": { "returns": "{ x: number; y: number; width: number; height: number; }" },
+				"getContentSize": { "returns": "number[]" },
+				"getMinimumSize": { "returns": "number[]" },
+				"getMaximumSize": { "returns": "number[]" },
+				"getPosition": { "returns": "number[]" },
+				"getSize": { "returns": "number[]" },
+				"getTitle": { "returns": "string" },
+				"getRepresentedFilename": { "returns": "string" },
+				"setThumbarButtons": { "returns": "boolean" }
+			},
+			"properties": {
+				"webContents": { "type": "WebContents" },
+				"id": { "type": "number" }
+			}
+		}
+	},
+	"clipboard.md": {
+		"mode": "Module",
+		"patches": {
+			"methods": {
+				"readText": { "returns": "string" },
+				"readHtml": { "returns": "string" },
+				"readImage": { "returns": "NativeImage" },
+				"availableFormats": { "returns": "string[]" },
+				"has": { "returns": "boolean" },
+				"read": { "returns": "any" }
+			}
+		}
+	},
+	"content-tracing.md": {
+		"mode": "Module",
+		"patches": {
+			"methods": {
+				"getCategories": { "returns": "any" },
+				"getTraceBufferUsage": { "returns": "number" }
+			}
+		}
+	}
+}

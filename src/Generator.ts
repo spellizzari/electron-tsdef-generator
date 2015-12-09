@@ -11,85 +11,123 @@ import * as ErrorManager from './ErrorManager';
 //ErrorManager.breakOnErrors = true;
 //ErrorManager.breakOnWarnings = true;
 
+/** Interface for the configuration file. */
+interface GeneratorConfig {
+	[fileName: string]: {
+		mode: string;
+		patches: {
+			methods: {
+				[methodName: string]: {
+					returns: string;
+					params: {
+						[parameterName: string]: string;
+					}
+				}
+			}
+			events: {
+				[eventName: string]: {
+					returnParams: {
+						[parameterName: string]: string;
+					}
+				}
+			}
+			properties: {
+				[propertyName: string]: {
+					type: string;
+				}
+			}
+		}
+	}
+}
+
+
+class DownloadedContent {
+	constructor (public name: string, public content: string, public htmlUrl: string) { }
+}
+
+class DownloadedContentMap {
+	[fileName: string]: DownloadedContent;
+}
+
+/** The application entry point. */
 async function main(): Promise<void> {
 	const rawBaseUrl = 'https://raw.githubusercontent.com/atom/electron/v0.35.4/docs/api';
 	const htmlBaseUrl = 'https://github.com/atom/electron/blob/v0.35.4/docs/api';
 	
+	// Load the configuration file.
+	const ConfigFileName = 'generatorConfig.json';
+	ErrorManager.logVerbose('loading configuration file %s', ConfigFileName);
+	var config = <GeneratorConfig>require('../' + ConfigFileName);
+	
 	// Create the download manager.
 	var downloadManager = new DownloadManager(rawBaseUrl, 'cache/electron-v0.35.4-docs-api');
-	async function downloadAsync(fileName: string) {
+	
+	// First we download all the stuff.
+	var downloadedContentMap = new DownloadedContentMap();
+	for (var fileName in config) {
+		// Download it (or load it from the cache).
 		var fileContent = await downloadManager.downloadAsync(fileName);
-		return {
-			name: fileName,
-			content: fileContent,
-			htmlUrl: htmlBaseUrl + '/' + fileName
-		};
+		
+		// Wrap it.
+		var downloadedContent = new DownloadedContent(fileName, fileContent, htmlBaseUrl + '/' + fileName);
+		downloadedContentMap[fileName] = downloadedContent;
 	}
 	
-	// ------------------- Download
-
-	// Download stuff.
-	var app_md = await downloadAsync('app.md');
-	var autoUpdater_md = await downloadAsync('auto-updater.md');
-	var browserWindow_md = await downloadAsync('browser-window.md');
-	var clipboard_md = await downloadAsync('clipboard.md');
-	var contentTracing_md = await downloadAsync('content-tracing.md');
-	
-	// ------------------- Parse
-	var parsedContent = <gen.GeneratedOutput[]>[];
-	
-	// Parse app.md.
-	var parsed_app_md = gen.generate(app_md.htmlUrl, app_md.content, gen.OutputMode.Module);
-	parsed_app_md.patchMethodReturnType('getAppPath', 'string');
-	parsed_app_md.patchMethodReturnType('getPath', 'string');
-	parsed_app_md.patchMethodReturnType('getVersion', 'string');
-	parsed_app_md.patchMethodReturnType('getName', 'string');
-	parsed_app_md.patchMethodReturnType('getLocale', 'string');
-	parsed_app_md.patchMethodReturnType('dock.bounce', 'number');
-	parsed_app_md.patchMethodReturnType('dock.getBadge', 'string');
-	parsed_app_md.patchMethodParameterType('makeSingleInstance', 'callback', '(argv: string[], workingDirectory: string) => boolean');
-	parsed_app_md.patchEventReturnParameterType('certificate-error', 'callback', '(value: boolean) => void');
-	parsed_app_md.patchEventReturnParameterType('select-client-certificate', 'callback', '(value: any) => void');
-	parsed_app_md.patchEventReturnParameterType('login', 'callback', '(username: string, secret: string) => void');
-	parsedContent.push(parsed_app_md);
-	
-	// Parse auto-updater.md.
-	var parsed_autoUpdater_md = gen.generate(autoUpdater_md.htmlUrl, autoUpdater_md.content, gen.OutputMode.Module);
-	parsedContent.push(parsed_autoUpdater_md);
-	
-	// Parse browser-window.md.
-	var parsed_browserWindow_md = gen.generate(browserWindow_md.htmlUrl, browserWindow_md.content, gen.OutputMode.Class);
-	parsed_browserWindow_md.patchMethodReturnType('getAllWindows', 'BrowserWindow[]');
-	parsed_browserWindow_md.patchMethodReturnType('getFocusedWindow', 'BrowserWindow');
-	parsed_browserWindow_md.patchMethodReturnType('fromWebContents', 'BrowserWindow');
-	parsed_browserWindow_md.patchMethodReturnType('fromId', 'BrowserWindow');
-	parsed_browserWindow_md.patchPropertyType('webContents', 'WebContents');
-	parsed_browserWindow_md.patchPropertyType('id', 'number');
-	parsed_browserWindow_md.patchMethodParameterType('setAspectRatio', 'aspectRatio', 'number');
-	parsed_browserWindow_md.patchMethodReturnType('getBounds', '{ x: number; y: number; width: number; height: number; }');
-	parsed_browserWindow_md.patchMethodReturnType('getContentSize', 'number[]');
-	parsed_browserWindow_md.patchMethodReturnType('getMinimumSize', 'number[]');
-	parsed_browserWindow_md.patchMethodReturnType('getMaximumSize', 'number[]');
-	parsed_browserWindow_md.patchMethodReturnType('getPosition', 'number[]');
-	parsed_browserWindow_md.patchMethodReturnType('getSize', 'number[]');
-	parsed_browserWindow_md.patchMethodReturnType('getTitle', 'string');
-	parsed_browserWindow_md.patchMethodReturnType('getRepresentedFilename', 'string');
-	parsed_browserWindow_md.patchMethodReturnType('setThumbarButtons', 'boolean');
-	parsedContent.push(parsed_browserWindow_md);
-	
-	// Parse clipboard.md.
-	var parsed_clipboard_md = gen.generate(clipboard_md.htmlUrl, clipboard_md.content, gen.OutputMode.Module);
-	parsed_clipboard_md.patchMethodReturnType('readText', 'string');
-	parsed_clipboard_md.patchMethodReturnType('readHtml', 'string');
-	parsed_clipboard_md.patchMethodReturnType('readImage', 'NativeImage');
-	parsed_clipboard_md.patchMethodReturnType('availableFormats', 'string[]');
-	parsed_clipboard_md.patchMethodReturnType('has', 'boolean');
-	parsed_clipboard_md.patchMethodReturnType('read', 'any');
-	parsedContent.push(parsed_clipboard_md);
-	
-	// Parse content-tracing.md.
-	var parsed_contentTracing_md = gen.generate(contentTracing_md.htmlUrl, contentTracing_md.content, gen.OutputMode.Module);
-	parsedContent.push(parsed_contentTracing_md);
+	// Then we parse and patch everyone.
+	var parsedContentList = <gen.GeneratedOutput[]>[];
+	for (var fileName in config) {
+		// Get stuff.
+		var contentConfig = config[fileName];
+		var downloadedContent = downloadedContentMap[fileName];
+		
+		// Parse it.
+		var parsedContent = gen.generate(downloadedContent.htmlUrl, downloadedContent.content,
+			gen.OutputMode[contentConfig.mode]);
+		
+		// If we have patches...
+		if (contentConfig.patches) {
+			
+			// If we have patches for methods...
+			if (contentConfig.patches.methods) {
+				for (var methodName in contentConfig.patches.methods) {
+					var methodPatch = contentConfig.patches.methods[methodName];
+					if (methodPatch.returns)
+						parsedContent.patchMethodReturnType(methodName, methodPatch.returns);
+					if (methodPatch.params) {
+						for (var parameterName in methodPatch.params) {
+							var parameterType = methodPatch.params[parameterName];
+							parsedContent.patchMethodParameterType(methodName, parameterName, parameterType);
+						}
+					}
+				}
+			}
+			
+			// If we have patches for events...
+			if (contentConfig.patches.events) {
+				for (var eventName in contentConfig.patches.events) {
+					var eventPatch = contentConfig.patches.events[eventName];
+					if (eventPatch.returnParams) {
+						for (var parameterName in eventPatch.returnParams) {
+							var parameterType = eventPatch.returnParams[parameterName];
+							parsedContent.patchEventReturnParameterType(eventName, parameterName, parameterType);
+						}
+					}
+				}
+			}
+			
+			// If we have patches for properties...
+			if (contentConfig.patches.properties) {
+				for (var propertyName in contentConfig.patches.properties) {
+					var propertyPatch = contentConfig.patches.properties[propertyName];
+					if (propertyPatch.type)
+						parsedContent.patchPropertyType(propertyName, propertyPatch.type);
+				}
+			}
+		}
+		
+		// Add to list.
+		parsedContentList.push(parsedContent);
+	}
 	
 	// ------------------- Code Generation
 	
@@ -323,16 +361,16 @@ async function main(): Promise<void> {
 	outputFile.indent();
 	outputFile.writeLine();
 	// ----------------------------
-	for (var i = 0; i < parsedContent.length; i++) {
-		emitParsedContent(parsedContent[i]);
+	for (var i = 0; i < parsedContentList.length; i++) {
+		emitParsedContent(parsedContentList[i]);
 		outputFile.writeLine();
 	}
 	// ----------------------------
 	outputFile.writeLine('interface Electron {');
 	outputFile.indent();
 	// Write modules.
-	for (var i = 0; i < parsedContent.length; i++) {
-		var content = parsedContent[i];
+	for (var i = 0; i < parsedContentList.length; i++) {
+		var content = parsedContentList[i];
 		if (content.mode == gen.OutputMode.Module) {
 			outputFile.writeLineFormat('/** %s */', content.comment);
 			outputFile.writeLineFormat('%s: %sModule;', content.name, toCamelCase(content.name));
@@ -342,8 +380,8 @@ async function main(): Promise<void> {
 		}
 	}
 	// Write data types.
-	for (var i = 0; i < parsedContent.length; i++) {
-		var content = parsedContent[i];
+	for (var i = 0; i < parsedContentList.length; i++) {
+		var content = parsedContentList[i];
 		if (content.dataTypes && content.dataTypes.length > 0) {
 			outputFile.writeLineFormat('// Data types defined in %s', content.url);
 			content.dataTypes.forEach(dataType => {
