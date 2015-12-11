@@ -346,13 +346,13 @@ declare module 'electron' {
 		quitAndInstall(): void;
 	}
 
-	interface button {
+	class Button {
 		/** The icon showing in thumbnail oolbar. */
 		icon: NativeImage;
 		/** The text of the button's tooltip. */
-		tooltip?: string;
+		tooltip: string;
 		/** Control specific states and behaviors f the button. By default, it uses `enabled`. It can include following trings: */
-		flags?: any[];
+		flags: any[];
 		/** Function */
 		click: Function;
 	}
@@ -811,7 +811,7 @@ declare module 'electron' {
 		 * @see {@link https://github.com/atom/electron/blob/v0.35.4/docs/api/browser-window.md#winsetthumbarbuttonsbuttons-windows-7}
 		 * @param buttons
 		 */
-		setThumbarButtons(buttons: button[]): boolean;
+		setThumbarButtons(buttons: Button[]): boolean;
 		/**
 		 * (OS X) Shows pop-up dictionary that searches the selected word on the page.
 		 * @see {@link https://github.com/atom/electron/blob/v0.35.4/docs/api/browser-window.md#winshowdefinitionforselection-os-x}
@@ -2560,9 +2560,7 @@ declare module 'electron' {
 		// Data types defined in https://github.com/atom/electron/blob/v0.35.4/docs/api/app.md
 		Task: typeof Task;
 		// Data types defined in https://github.com/atom/electron/blob/v0.35.4/docs/api/browser-window.md
-		button: typeof button;
-		// Type aliases
-		Accelerator: typeof Accelerator;
+		Button: typeof Button;
 	}
 	var electron: Electron;
 	export = electron;

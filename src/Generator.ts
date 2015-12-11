@@ -446,12 +446,12 @@ async function main(): Promise<void> {
 		}
 	}
 	// Write aliased types.
-	if (config.typeAliases) {
-		outputFile.writeLine('// Type aliases');
-		for (var typeAlias in config.typeAliases) {
-			outputFile.writeLineFormat("%s: typeof %s;", typeAlias, typeAlias);
-		}
-	}
+	//if (config.typeAliases) {
+	//	outputFile.writeLine('// Type aliases');
+	//	for (var typeAlias in config.typeAliases) {
+	//		outputFile.writeLineFormat("%s: typeof %s;", typeAlias, typeAlias);
+	//	}
+	//}
 	outputFile.unindent();
 	outputFile.writeLine('}');
 	outputFile.writeLine('var electron: Electron;');
