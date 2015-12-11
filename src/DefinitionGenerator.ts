@@ -280,6 +280,7 @@ export enum SectionRole {
 
 export class ParserSettings {
 	mode: OutputMode;
+	name: string;
 	methodsAreInstance: boolean;
 	uncommonSections: {
 		[sectionName: string]: SectionRole;
@@ -335,7 +336,7 @@ function parseTopLevelSection(url: string, section: mk.Section, output: Generate
 	output.url = url;
 	
 	// Get the section name.
-	output.name = section.name;
+	output.name = settings.name ? settings.name : section.name;
 	
 	// If it's a class, turn into class case.
 	if (settings.mode == OutputMode.Class)
@@ -508,6 +509,8 @@ function parseTopLevelSection(url: string, section: mk.Section, output: Generate
 function parseSimpleType(type: string): string {
 	switch (type) {
 		case 'String': return 'string';
+		case 'Float': return 'number';
+		case 'Double': return 'number';
 		case 'Integer': return 'number';
 		default: return type;
 	}
@@ -572,7 +575,7 @@ function parseParameterList(url: string, items: mk.ListItem[], referencedDataTyp
 				}
 			}
 			// If it's an array of Objects...
-			else if (parameter.type === '[Objects]') {
+			else if (parameter.type === 'Objects') {
 				// If we have subitems in the list...
 				if (item.items) {
 					// Make it an anonymous type.
@@ -583,24 +586,34 @@ function parseParameterList(url: string, items: mk.ListItem[], referencedDataTyp
 				}
 			}
 			// If it's an Array...
-			else if (parameter.type === 'Array' && parameter.comment) {
-				// If the comment is well-formed...
-				var commentMatch = parameter.comment.trim().match(/^array of `(\w+)` objects$/i);
-				if (commentMatch && referencedDataTypes) {
-					// Add to the list.
-					referencedDataTypes.push({ text: commentMatch[1], lineNum: item.lineNum });
-					parameter.type = commentMatch[1] + '[]';
+			else if (parameter.type === 'Array') {
+				var gotType = false;
+				if (parameter.comment) {
+					// If the comment is well-formed...
+					var commentMatch = parameter.comment.trim().match(/^array of `(\w+)` objects$/i);
+					if (commentMatch && referencedDataTypes) {
+						// Add to the list.
+						referencedDataTypes.push({ text: commentMatch[1], lineNum: item.lineNum });
+						parameter.type = commentMatch[1] + '[]';
+						gotType = true;
+					}
 				}
+				if (!gotType)
+					parameter.type = 'any[]';
 			}
-			// If it's an Array...
+			// If it's an Array of ......
 			else if (parameter.type.startsWith('Array of `')) {
+				var gotType = false;
 				// If the comment is well-formed...
-				var commentMatch = parameter.type.trim().match(/^array of `(\w+)`.*$/i);
-				if (commentMatch && referencedDataTypes) {
+				var typeMatch = parameter.type.trim().match(/^array of `(\w+)`.*$/i);
+				if (typeMatch && referencedDataTypes) {
 					// Add to the list.
-					referencedDataTypes.push({ text: commentMatch[1], lineNum: item.lineNum });
-					parameter.type = commentMatch[1] + '[]';
+					referencedDataTypes.push({ text: typeMatch[1], lineNum: item.lineNum });
+					parameter.type = typeMatch[1] + '[]';
+					gotType = true;
 				}
+				if (!gotType)
+					parameter.type = 'any[]';
 			}
 			// If the type is a simple name...
 			else if (/^\w+$/.test(parameter.type)) {
@@ -776,10 +789,10 @@ function parseMethods(url: string, section: mk.Section, output: MethodDefinition
 			
 			// Get the name and whether it's an optional one.
 			if (parameterMatch[3]) {
-				parameterDefinition.name = parameterMatch[3];
+				parameterDefinition.name = checkReservedName(parameterMatch[3]);
 				parameterDefinition.optional = gotOptionalParameters;
 			} else {
-				parameterDefinition.name = parameterMatch[1];
+				parameterDefinition.name = checkReservedName(parameterMatch[1]);
 				parameterDefinition.optional = true;
 				gotOptionalParameters = true;
 			}
@@ -963,6 +976,10 @@ function updateDataTypeDefinitions(url: string, referencedDataTypes: mk.Sentence
 				
 				// Parse members.
 				dataType.members = parseParameterList(url, membersList, referencedDataTypes);
+				
+				// If one of them is optional, make it an interface.
+				if (dataType.members.find(item => item.optional))
+					dataType.isInterface = true;
 			} else {
 				ErrorManager.logWarning(url, referencedDataType.lineNum, 'could not find the definition of type %s', referencedDataType.text);
 				dataType = new DataTypeDefinition();

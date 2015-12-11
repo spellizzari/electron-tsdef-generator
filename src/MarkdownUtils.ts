@@ -72,7 +72,12 @@ export class Paragraph {
 /** Makes a url to a section. */
 export function makeUrl(url: string, sectionName: string): string {
 	// https://regex101.com/r/zK7oR5/1
-	var anchor = sectionName.toLowerCase().replace(/[^\w]+/g, '-');
+	var anchor = sectionName
+		.toLowerCase()
+		.replace(/[^a-zA-Z0-9 ]/g, '')
+		.replace(/[ ]+/g, '-')
+		.replace(/^-+/, '')
+		.replace(/-+$/, '');
 	return url + '#' + anchor;
 }
 

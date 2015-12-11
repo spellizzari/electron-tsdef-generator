@@ -22,6 +22,7 @@ interface GeneratorConfig {
 	files: {
 		[fileName: string]: {
 			mode: string;
+			name: string;
 			parsing: {
 				uncommonSections: {
 					[sectionName: string]: string;
@@ -94,6 +95,7 @@ async function main(): Promise<void> {
 		// Prepare parser settings.
 		var parserSettings = new gen.ParserSettings();
 		parserSettings.mode = gen.OutputMode[contentConfig.mode];
+		parserSettings.name = contentConfig.name;
 		if (contentConfig.parsing) {
 			if (contentConfig.parsing.methodsAreInstance)
 				parserSettings.methodsAreInstance = true;
@@ -211,17 +213,38 @@ async function main(): Promise<void> {
 		});
 	}
 	
-	function emitPlatformAwareComment(comment: string, platforms: string[]) {
-		if (platforms) {
-			outputFile.writeLineFormat('/** (%s) %s */', platforms.join(', '), comment);
-		} else {
-			outputFile.writeLineFormat('/** %s */', comment);
+	function emitComment(comment: string, url?: string, platforms?: string[], parameters?: gen.ParameterDefinition[], returns?: gen.ParameterDefinition) {
+		var singleLine = !url && !parameters && !returns;
+		if (singleLine)
+			outputFile.write('/** ');
+		else {
+			outputFile.writeLine('/**');
+			outputFile.write(' * ');
+		}
+		if (platforms)
+			outputFile.writeFormat('(%s) ', platforms.join(', '));
+		if (singleLine)
+			outputFile.writeLineFormat('%s */', comment);
+		else {
+			outputFile.writeLine(comment);
+			if (url)
+				outputFile.writeLineFormat(' * @see {@link %s}', url);
+			if (parameters)
+				parameters.forEach(param => {
+					if (param.comment)
+						outputFile.writeLineFormat(' * @param %s - %s', param.name, param.comment);
+					else
+						outputFile.writeLineFormat(' * @param %s', param.name);
+				});
+			if (returns && returns.comment)
+				outputFile.writeLineFormat(' * @returns %s', returns.comment);
+			outputFile.writeLine(' */');
 		}
 	}
 	
 	function emitProperty(property: gen.PropertyDefinition) {
 		// Write comment.
-		emitPlatformAwareComment(property.comment, property.platforms);
+		emitComment(property.comment, property.url, property.platforms);
 		// Write it.
 		if (property.static)
 			outputFile.write('static ');
@@ -235,15 +258,7 @@ async function main(): Promise<void> {
 	
 	function emitMethod(method: gen.MethodDefinition, isCtor?: boolean) {
 		// Write comment.
-		emitPlatformAwareComment(method.comment, method.platforms);
-		method.parameters.forEach(parameter => {
-			if (parameter.comment) {
-				outputFile.writeLineFormat('/** @param %s - %s */', parameter.name, parameter.comment);
-			}
-		});
-		if (method.returns && method.returns.comment) {
-			outputFile.writeLineFormat('/** @returns %s */', method.returns.comment);
-		}
+		emitComment(method.comment, method.url, method.platforms, method.parameters, method.returns);
 		// Write method name.
 		if (isCtor)
 			outputFile.write('constructor(');
@@ -284,10 +299,6 @@ async function main(): Promise<void> {
 	}
 	
 	function emitParsedContent(content: gen.GeneratedOutput) {
-		// Emit comment.
-		outputFile.writeLineFormat('// Code generated from %s', content.url);
-		outputFile.writeLine();
-		
 		// Emit data types.
 		if (content.dataTypes && content.dataTypes.length > 0) {
 			content.dataTypes.forEach(dataType => {
@@ -299,7 +310,7 @@ async function main(): Promise<void> {
 				if (dataType.members && dataType.members.length > 0)
 					dataType.members.forEach(member => {
 						// Write comment.
-						outputFile.writeLineFormat('/** %s */', member.comment);
+						emitComment(member.comment);
 						// Write member definition.
 						outputFile.write(member.name);
 						if (member.optional)
@@ -319,11 +330,11 @@ async function main(): Promise<void> {
 		}
 		
 		// Emit declaration.
-		outputFile.writeLineFormat('/** %s */', content.comment);
+		emitComment(content.comment, content.url);
 		if (content.mode == gen.OutputMode.Module)
 			outputFile.writeLineFormat('interface %sModule extends NodeJS.EventEmitter {', toCamelCase(content.name));
 		else
-			outputFile.writeLineFormat('class %s extends NodeJS.EventEmitter {', content.name);
+			outputFile.writeLineFormat('class %s extends events.EventEmitter {', content.name);
 		outputFile.indent();
 		
 		// Emit constructors.
@@ -350,7 +361,7 @@ async function main(): Promise<void> {
 			outputFile.writeLine('on(event: string, listener: Function): NodeJS.EventEmitter;');
 			content.events.forEach(event => {
 				// Write comment.
-				emitPlatformAwareComment(event.comment, event.platforms);
+				emitComment(event.comment, event.url, event.platforms, event.returns);
 				// Write event name.
 				outputFile.writeFormat('on(event: \'%s\', listener: ', event.name);
 				// Write listener function.
@@ -396,11 +407,12 @@ async function main(): Promise<void> {
 	outputFile.writeLine('declare module \'electron\' {');
 	outputFile.indent();
 	outputFile.writeLine();
+	outputFile.writeLine('import * as events from "events";');
 	// ----------------------------
 	if (config.typeAliases) {
 		for (var typeAlias in config.typeAliases) {
 			var aliasedType = config.typeAliases[typeAlias];
-			outputFile.writeLineFormat("class %s extends %s { };", typeAlias, aliasedType);
+			outputFile.writeLineFormat("type %s = %s;", typeAlias, aliasedType);
 		}
 		outputFile.writeLine();
 	}
@@ -416,7 +428,7 @@ async function main(): Promise<void> {
 	for (var i = 0; i < parsedContentList.length; i++) {
 		var content = parsedContentList[i];
 		if (content.mode == gen.OutputMode.Module) {
-			outputFile.writeLineFormat('/** %s */', content.comment);
+			emitComment(content.comment, content.url);
 			outputFile.writeLineFormat('%s: %sModule;', content.name, toCamelCase(content.name));
 		} else {
 			outputFile.writeLineFormat('/** %s */', content.comment);

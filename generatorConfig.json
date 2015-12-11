@@ -8,6 +8,7 @@
 	"files": {
 		"app.md": {
 			"mode": "Module",
+			"isEventEmitter": "true",
 			"patches": {
 				"methods": {
 					"getAppPath": { "returns": "string" },
@@ -27,10 +28,12 @@
 			}
 		},
 		"auto-updater.md": {
-			"mode": "Module"
+			"mode": "Module",
+			"isEventEmitter": "true"
 		},
 		"browser-window.md": {
 			"mode": "Class",
+			"isEventEmitter": "true",
 			"patches": {
 				"methods": {
 					"getAllWindows": { "returns": "BrowserWindow[]" },
@@ -56,6 +59,7 @@
 		},
 		"clipboard.md": {
 			"mode": "Module",
+			"isEventEmitter": "true",
 			"patches": {
 				"methods": {
 					"readText": { "returns": "string" },
@@ -69,6 +73,7 @@
 		},
 		"content-tracing.md": {
 			"mode": "Module",
+			"isEventEmitter": "true",
 			"patches": {
 				"methods": {
 					"getCategories": { "returns": "any" },
@@ -78,6 +83,7 @@
 		},
 		"crash-reporter.md": {
 			"mode": "Module",
+			"isEventEmitter": "true",
 			"patches": {
 				"methods": {
 					"start": { "params": { "options.extra": "Object" } },
@@ -88,6 +94,7 @@
 		},
 		"dialog.md": {
 			"mode": "Module",
+			"isEventEmitter": "true",
 			"patches": {
 				"methods": {
 					"showOpenDialog": { "params": { "callback": "(filenames: string[]) => void" }, "returns": "string[]" },
@@ -98,6 +105,7 @@
 		},
 		"download-item.md": {
 			"mode": "Class",
+			"isEventEmitter": "true",
 			"patches": {
 				"methods": {
 					"getURL": { "returns": "string" },
@@ -110,10 +118,13 @@
 			}
 		},
 		"global-shortcut.md": {
-			"mode": "Module"
+			"mode": "Module",
+			"name": "globalShortcut",
+			"isEventEmitter": "true"
 		},
 		"ipc-main.md": {
 			"mode": "Module",
+			"isEventEmitter": "true",
 			"parsing": {
 				"uncommonSections": {
 					"Listening for Messages": "Methods"
@@ -121,12 +132,13 @@
 			},
 			"patches": {
 				"methods": {
-					"on": { "params": { "callback": "(event: { returnValue: any; sender: WebContents; }) => void" } }
+					"on": { "params": { "callback": "(event: { returnValue: any; sender: WebContents; }) => void" }, "returns": "NodeJS.EventEmitter" }
 				}
 			}
 		},
 		"ipc-renderer.md": {
 			"mode": "Module",
+			"isEventEmitter": "true",
 			"parsing": {
 				"uncommonSections": {
 					"Listening for Messages": "Methods",
@@ -135,15 +147,17 @@
 			},
 			"patches": {
 				"methods": {
-					"on": { "params": { "callback": "(event: any) => void" } }
+					"on": { "params": { "callback": "(event: any) => void" }, "returns": "NodeJS.EventEmitter" }
 				}
 			}
 		},
 		"menu-item.md": {
-			"mode": "Class"
+			"mode": "Class",
+			"isEventEmitter": "true"
 		},
 		"menu.md": {
 			"mode": "Class",
+			"isEventEmitter": "true",
 			"patches": {
 				"methods": {
 					"items": { "returns": "MenuItem[]" }
@@ -152,6 +166,7 @@
 		},
 		"native-image.md": {
 			"mode": "Class",
+			"isEventEmitter": "true",
 			"patches": {
 				"methods": {
 					"createEmpty": { "returns": "NativeImage" },
@@ -166,10 +181,12 @@
 			}
 		},
 		"power-monitor.md": {
-			"mode": "Module"
+			"mode": "Module",
+			"isEventEmitter": "true"
 		},
 		"power-save-blocker.md": {
 			"mode": "Module",
+			"isEventEmitter": "true",
 			"patches": {
 				"methods": {
 					"start": { "returns": "number" }
@@ -178,6 +195,7 @@
 		},
 		"protocol.md": {
 			"mode": "Module",
+			"isEventEmitter": "true",
 			"patches": {
 				"methods": {
 					"registerStandardSchemes": { "params": { "schemes": "string[]" } }
@@ -186,6 +204,7 @@
 		},
 		"remote.md": {
 			"mode": "Module",
+			"isEventEmitter": "true",
 			"patches": {
 				"methods": {
 					"require": { "returns": "any" },
@@ -195,6 +214,7 @@
 		},
 		"screen.md": {
 			"mode": "Module",
+			"isEventEmitter": "true",
 			"patches": {
 				"methods": {
 					"getCursorScreenPoint": { "returns": "number[]" },
@@ -207,6 +227,7 @@
 		},
 		"session.md": {
 			"mode": "Class",
+			"isEventEmitter": "true",
 			"patches": {
 				"properties": {
 					"defaultSession": { "type": "Session" }
@@ -214,16 +235,19 @@
 			}
 		},
 		"shell.md": {
-			"mode": "Module"
+			"mode": "Module",
+			"isEventEmitter": "true"
 		},
 		"tray.md": {
 			"mode": "Class",
+			"isEventEmitter": "true",
 			"parsing": {
 				"methodsAreInstance": true
 			}
 		},
 		"web-contents.md": {
 			"mode": "Class",
+			"isEventEmitter": "true",
 			"patches": {
 				"methods": {
 					"getURL": { "returns": "string" },
@@ -237,6 +261,7 @@
 		},
 		"web-frame.md": {
 			"mode": "Module",
+			"isEventEmitter": "true",
 			"patches": {
 				"methods": {
 					"getZoomFactor": { "returns": "number" },
