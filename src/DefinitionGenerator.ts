@@ -340,7 +340,7 @@ function parseTopLevelSection(url: string, section: mk.Section, output: Generate
 	
 	// If it's a class, turn into class case.
 	if (settings.mode == OutputMode.Class)
-		output.name = output.name.charAt(0).toUpperCase() + output.name.substring(1);
+		output.name = toTypeCase(output.name);
 	
 	// Split into sections again.
 	var subsections = section.splitIntoSubsections();
@@ -593,8 +593,8 @@ function parseParameterList(url: string, items: mk.ListItem[], referencedDataTyp
 					var commentMatch = parameter.comment.trim().match(/^array of `(\w+)` objects$/i);
 					if (commentMatch && referencedDataTypes) {
 						// Add to the list.
-						referencedDataTypes.push({ text: commentMatch[1], lineNum: item.lineNum });
-						parameter.type = commentMatch[1] + '[]';
+						referencedDataTypes.push({ text: toTypeCase(commentMatch[1]), lineNum: item.lineNum });
+						parameter.type = toTypeCase(commentMatch[1]) + '[]';
 						gotType = true;
 					}
 				}
@@ -608,8 +608,8 @@ function parseParameterList(url: string, items: mk.ListItem[], referencedDataTyp
 				var typeMatch = parameter.type.trim().match(/^array of `(\w+)`.*$/i);
 				if (typeMatch && referencedDataTypes) {
 					// Add to the list.
-					referencedDataTypes.push({ text: typeMatch[1], lineNum: item.lineNum });
-					parameter.type = typeMatch[1] + '[]';
+					referencedDataTypes.push({ text: toTypeCase(typeMatch[1]), lineNum: item.lineNum });
+					parameter.type = toTypeCase(typeMatch[1]) + '[]';
 					gotType = true;
 				}
 				if (!gotType)
@@ -955,7 +955,7 @@ function updateDataTypeDefinitions(url: string, referencedDataTypes: mk.Sentence
 		if (!dataType) {
 			// Try to look for the defining paragraph.
 			var definingParagraphIndex = paragraphs.findIndex(item => item.lines.length > 0 &&
-				item.lines[0].text.startsWith('`'+referencedDataType.text+'` Object'));
+				item.lines[0].text.toLowerCase().startsWith('`'+referencedDataType.text.toLowerCase()+'` object'));
 			if (definingParagraphIndex != -1) {
 				var definingParagraph = paragraphs[definingParagraphIndex];
 				
@@ -977,9 +977,9 @@ function updateDataTypeDefinitions(url: string, referencedDataTypes: mk.Sentence
 				// Parse members.
 				dataType.members = parseParameterList(url, membersList, referencedDataTypes);
 				
-				// If one of them is optional, make it an interface.
-				if (dataType.members.find(item => item.optional))
-					dataType.isInterface = true;
+				// If we don't have an interface, remove optional flags.
+				if (!dataType.isInterface)
+					dataType.members.forEach(item => item.optional = false);
 			} else {
 				ErrorManager.logWarning(url, referencedDataType.lineNum, 'could not find the definition of type %s', referencedDataType.text);
 				dataType = new DataTypeDefinition();
@@ -1022,7 +1022,7 @@ function patchMemberParagraphs(paragraphs: mk.Paragraph[]) {
 	}
 }
 
-function toCamelCase(s: string): string {
+function toTypeCase(s: string): string {
 	return s.charAt(0).toUpperCase() + s.substring(1);
 }
 
